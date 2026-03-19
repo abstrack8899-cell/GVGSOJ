@@ -1,0 +1,1699 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GVG Analytics</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&family=Noto+Sans+Thai:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f172a;--bg2:#1e293b;--bg3:#334155;--bg4:#475569;
+  --surface:#1e293b;--surface2:#334155;
+  --border:#334155;--border2:#475569;
+  --tx1:#f8fafc;--tx2:#cbd5e1;--tx3:#94a3b8;--tx4:#64748b;
+  --accent:#818cf8;--accent-l:#a5b4fc;--accent-ll:#312e81;--accent-text:#e0e7ff;
+  --red:#f87171;--red-bg:#450a0a;--red-light:#7f1d1d;
+  --green:#34d399;--green-bg:#064e3b;
+  --gold:#fbbf24;--gold-bg:#78350f;
+  --blue:#60a5fa;--blue-bg:#1e3a8a;
+  --opp:#38bdf8;--opp-bg:#082f49;--opp-border:#0369a1;
+  --font:'DM Sans','Noto Sans Thai',sans-serif;
+  --mono:'DM Mono',monospace;
+  --r-sm:6px;--r:10px;--r-lg:14px;
+  --sh-xs:0 1px 2px rgba(0,0,0,.15);
+  --sh-sm:0 1px 3px rgba(0,0,0,.25),0 1px 2px rgba(0,0,0,.15);
+  --sh:0 4px 12px rgba(0,0,0,.2),0 1px 3px rgba(0,0,0,.1);
+  --sh-lg:0 12px 32px rgba(0,0,0,.3),0 2px 6px rgba(0,0,0,.15);
+  --sb-w:256px;
+}
+html{font-size:14px;scrollbar-width:thin;scrollbar-color:var(--border2) transparent}
+body{height:100vh;background:var(--bg);color:var(--tx1);font-family:var(--font);overflow:hidden}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:8px}
+::-webkit-scrollbar-thumb:hover{background:var(--tx4)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideDown{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+
+.app{display:flex;flex-direction:column;height:100vh}
+
+/* NAV */
+.topnav{
+  height:52px;flex-shrink:0;background:var(--bg2);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 16px;gap:10px;
+  box-shadow:var(--sh-xs);position:relative;z-index:200
+}
+.logo{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.logo-badge{width:28px;height:28px;background:var(--accent);border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 2px 6px rgba(99,102,241,.25);color:#0f172a}
+.logo-name{font-size:13px;font-weight:700;color:var(--tx1);letter-spacing:-.2px}
+.logo-sub{font-size:10px;color:var(--tx3);font-weight:400;margin-top:1px}
+.nav-div{width:1px;height:20px;background:var(--border);flex-shrink:0}
+.mode-tabs{display:flex;gap:2px}
+.tab{font-size:12px;font-weight:500;padding:5px 12px;border-radius:var(--r-sm);border:none;background:none;color:var(--tx3);cursor:pointer;font-family:var(--font);transition:all .15s;letter-spacing:-.1px;white-space:nowrap}
+.tab:hover{color:var(--tx1);background:var(--bg3)}
+.tab.active{background:var(--accent-ll);color:var(--accent-text);font-weight:600}
+.spacer{flex:1}
+.btn{font-size:12px;font-weight:500;padding:6px 13px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface2);color:var(--tx2);cursor:pointer;font-family:var(--font);transition:all .15s;white-space:nowrap}
+.btn:hover{background:var(--bg4);border-color:var(--tx4);color:var(--tx1)}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#0f172a;font-weight:700;box-shadow:0 2px 6px rgba(129,140,248,.15)}
+.btn-primary:hover{background:var(--accent-l);box-shadow:0 3px 10px rgba(129,140,248,.25)}
+.btn-danger{color:var(--red);border-color:var(--red-light);background:var(--red-bg)}
+.btn-danger:hover{background:#7f1d1d;border-color:#b91c1c;color:#fca5a5}
+.btn-opp{background:var(--opp-bg);border:1px solid var(--opp-border);color:var(--opp)}
+.btn-opp:hover{background:#0369a1;border-color:#0284c7;color:#f0f9ff}
+.hamburger{display:none;background:none;border:none;cursor:pointer;padding:4px;color:var(--tx2)}
+
+/* BODY */
+.body{display:flex;flex:1;overflow:hidden;position:relative}
+
+/* SIDEBAR */
+.sidebar{width:var(--sb-w);flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;transition:transform .25s ease}
+.sb-opp{width:230px;flex-shrink:0;background:var(--bg2);border-left:1px solid var(--opp-border);display:none;flex-direction:column;overflow:hidden}
+.sb-opp.show{display:flex}
+.sb-top{padding:10px 14px 9px;border-bottom:1px solid var(--border)}
+.sb-label{font-size:10px;font-weight:700;color:var(--tx3);letter-spacing:.6px;text-transform:uppercase;margin-bottom:6px}
+.sb-select{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--tx1);padding:6px 10px;border-radius:var(--r-sm);font-size:12px;font-family:var(--font);cursor:pointer;outline:none;transition:border-color .15s}
+.sb-select:focus{border-color:var(--accent-l);box-shadow:0 0 0 3px var(--accent-ll)}
+.sb-rank-hdr{display:flex;align-items:center;justify-content:space-between;padding:6px 14px;border-bottom:1px solid var(--border);background:var(--bg)}
+.sb-rank-lbl{font-size:10px;font-weight:700;color:var(--tx3);letter-spacing:.6px;text-transform:uppercase}
+.sb-cnt{font-family:var(--mono);font-size:10px;font-weight:600;color:var(--accent-text);background:var(--accent-ll);border-radius:20px;padding:1px 8px}
+.player-scroll{flex:1;overflow-y:auto}
+.player-row{display:flex;align-items:center;gap:7px;padding:7px 12px 7px 14px;cursor:pointer;transition:background .12s;border-left:2px solid transparent}
+.player-row:hover{background:var(--bg3)}
+.player-row.active{background:var(--accent-ll);border-left-color:var(--accent)}
+.player-row.active .p-name-text{color:var(--accent-text)}
+.p-rank{font-family:var(--mono);font-size:10px;color:var(--tx4);width:16px;text-align:right;flex-shrink:0}
+.p-rank.r1{color:#fbbf24;font-weight:700}
+.p-rank.r2{color:#cbd5e1;font-weight:700}
+.p-rank.r3{color:#b45309;font-weight:700}
+.p-info{flex:1;min-width:0}
+.p-name-row{display:flex;align-items:center;gap:4px;min-width:0}
+.p-name-text{font-size:12px;font-weight:500;color:var(--tx1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0}
+.p-meta{display:flex;align-items:center;gap:4px;margin-top:2px;flex-wrap:nowrap}
+.p-cls-lbl{font-size:10px;color:var(--tx3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90px}
+.p-score-col{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.p-score{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--tx2);flex-shrink:0}
+.p-kda{font-family:var(--mono);font-size:9px;color:var(--tx4);flex-shrink:0}
+.p-matches{font-family:var(--mono);font-size:9px;flex-shrink:0}
+.tier{font-family:var(--mono);font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;flex-shrink:0}
+.t-s{background:#78350f;color:#fbbf24}
+.t-a{background:var(--accent-ll);color:var(--accent-text)}
+.t-b{background:#082f49;color:#38bdf8}
+.t-c{background:#064e3b;color:#34d399}
+.t-d{background:var(--bg3);color:var(--tx3)}
+.trend{font-size:10px;font-weight:700;flex-shrink:0}
+.t-up{color:var(--green)}
+.t-dn{color:var(--red)}
+.t-fl{color:var(--tx4)}
+.adot{width:5px;height:5px;border-radius:50%;background:var(--red);flex-shrink:0;animation:pulse 1.8s ease infinite}
+
+/* MAIN */
+.main{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:11px}
+
+/* CARD */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px 18px;box-shadow:var(--sh-sm);animation:fadeUp .3s ease both}
+.card.opp-card{border-color:var(--opp-border)}
+.card-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;gap:12px}
+.card-title{font-size:13px;font-weight:700;color:var(--tx1);letter-spacing:-.2px}
+.card-sub{font-size:11px;color:var(--tx3);margin-top:3px;font-weight:400}
+.card-tag{font-family:var(--mono);font-size:10px;font-weight:600;color:var(--tx3);background:var(--bg3);border-radius:4px;padding:2px 8px;white-space:nowrap;flex-shrink:0}
+.divider{display:flex;align-items:center;gap:10px;margin:2px 0}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.divider-lbl{font-size:10px;font-weight:700;color:var(--tx3);letter-spacing:.6px;text-transform:uppercase;white-space:nowrap;padding:0 4px}
+.divider-sub{font-size:9px;color:var(--tx4);margin-top:2px;text-align:center}
+.col2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.col3{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+
+/* STAT MINI CARD */
+.sc{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;display:flex;flex-direction:column;gap:2px;transition:box-shadow .18s,transform .18s}
+.sc:hover{box-shadow:var(--sh);transform:translateY(-1px)}
+.sc.opp{border-color:var(--opp-border)}
+.sc-lbl{font-size:9px;font-weight:700;color:var(--tx3);letter-spacing:.5px;text-transform:uppercase}
+.sc-val{font-family:var(--mono);font-size:18px;font-weight:600;color:var(--tx1);line-height:1.1}
+.sc-diff{font-size:10px;font-weight:600}
+.sc-avg{font-size:10px;color:var(--tx3);font-family:var(--mono)}
+.sc-bar{height:3px;background:var(--bg3);border-radius:2px;margin-top:5px;overflow:hidden}
+.sc-fill{height:100%;border-radius:2px;transition:width .7s cubic-bezier(.4,0,.2,1)}
+
+/* PLAYER HEADER */
+.ph-grid{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:14px}
+.ph-left{display:flex;align-items:center;gap:11px}
+.ph-right{display:flex;align-items:center;gap:11px;justify-content:flex-end;opacity:0;pointer-events:none;transition:opacity .2s}
+.ph-right.show{opacity:1;pointer-events:auto}
+.ph-center{display:flex;gap:10px;align-items:flex-end;justify-content:center}
+.avatar{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;background:var(--accent-ll);border:1.5px solid var(--border);box-shadow:var(--sh-xs)}
+.avatar.opp{background:var(--opp-bg);border-color:var(--opp-border)}
+.ph-name{font-size:19px;font-weight:800;color:var(--tx1);white-space:nowrap;letter-spacing:-.4px;line-height:1.1}
+.ph-name.opp{color:var(--opp)}
+.ph-badges{display:flex;gap:5px;align-items:center;margin-top:5px;flex-wrap:wrap}
+.badge{font-size:10px;font-weight:600;padding:2px 8px;border-radius:4px;white-space:nowrap}
+.badge-cls{background:var(--accent-ll);color:var(--accent-text)}
+.badge-rank{background:var(--gold-bg);color:var(--gold)}
+.badge-blue{background:var(--opp-bg);color:var(--opp)}
+
+/* EMPTY STATE */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;gap:12px;animation:fadeUp .35s ease both}
+.empty-icon{font-size:40px;opacity:.35}
+.empty-title{font-size:16px;font-weight:700;color:var(--tx2)}
+.empty-sub{font-size:12px;color:var(--tx3);text-align:center;max-width:280px;line-height:1.6}
+
+/* MATCH BOX */
+.match-box{display:flex;flex-direction:column;gap:4px}
+.match-box-lbl{font-size:10px;font-weight:700;color:var(--tx3);letter-spacing:.5px;text-transform:uppercase}
+.match-btn{display:flex;align-items:center;gap:7px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r-sm);padding:6px 11px;font-size:12px;font-weight:500;color:var(--tx1);cursor:pointer;font-family:var(--font);min-width:160px;justify-content:space-between;transition:all .15s}
+.match-btn:hover{border-color:var(--accent-l);background:var(--accent-ll);color:var(--accent-text)}
+.match-btn.open{border-color:var(--accent-l);background:var(--accent-ll);color:var(--accent-text);box-shadow:0 0 0 3px var(--accent-ll)}
+.match-btn.opp{background:var(--opp-bg);border-color:var(--opp-border);color:var(--opp)}
+.match-btn.opp:hover,.match-btn.opp.open{background:#0369a1;color:#f0f9ff;border-color:#0284c7;box-shadow:0 0 0 3px #082f49}
+.match-arrow{font-size:8px;color:var(--tx3);transition:transform .18s}
+.match-arrow.up{transform:rotate(180deg)}
+.match-dropdown{display:none;position:fixed;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh-lg);min-width:320px;z-index:9999;animation:slideDown .15s ease;overflow:hidden}
+.match-dropdown.open{display:block}
+.match-dd-hdr{padding:9px 13px 7px;font-size:10px;font-weight:700;color:var(--tx3);letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--border)}
+.match-fi{display:flex;align-items:center;gap:9px;padding:9px 13px;cursor:pointer;transition:background .1s;border-bottom:1px solid var(--border)}
+.match-fi:last-of-type{border-bottom:none}
+.match-fi:hover{background:var(--bg3)}
+.match-fi.active{background:var(--accent-ll)}
+.match-fi-name{font-size:12px;font-weight:500;color:var(--tx1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0}
+.match-fi.active .match-fi-name{color:var(--accent-text)}
+.match-fi-meta{font-size:10px;color:var(--tx3);font-family:var(--mono);margin-top:1px;display:flex;gap:6px;align-items:center}
+.wl-badge{font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;cursor:pointer;border:none;font-family:var(--mono)}
+.wl-w{background:var(--green-bg);color:var(--green)}
+.wl-l{background:var(--red-bg);color:var(--red)}
+.wl-none{background:var(--bg3);color:var(--tx3)}
+.match-fi-check{color:var(--accent);font-size:12px;flex-shrink:0;margin-left:auto}
+.match-dd-footer{padding:9px 13px;font-size:12px;color:var(--accent);font-weight:600;cursor:pointer;transition:background .1s;border-top:1px solid var(--border);text-align:center}
+.match-dd-footer:hover{background:var(--accent-ll)}
+
+/* TOP 10 */
+.top10-row{display:flex;align-items:center;gap:7px;padding:5px 3px;border-bottom:1px solid var(--border);transition:background .1s;border-radius:4px}
+.top10-row:last-child{border-bottom:none}
+.top10-row:hover{background:var(--bg3)}
+.top10-n{font-family:var(--mono);font-size:10px;font-weight:700;width:18px;text-align:right;flex-shrink:0}
+.top10-v{font-family:var(--mono);font-size:11px;font-weight:600;flex-shrink:0}
+
+/* PERF TABLE */
+.perf-hdr{display:grid;grid-template-columns:2fr .9fr .9fr 1.2fr 1.2fr .7fr .8fr .7fr;padding:6px 10px;background:var(--bg3);border-radius:var(--r-sm);margin-bottom:2px}
+.perf-hdr span{font-size:9px;font-weight:700;color:var(--tx3);letter-spacing:.5px;text-transform:uppercase;text-align:center}
+.perf-hdr span:first-child{text-align:left}
+.perf-row{display:grid;grid-template-columns:2fr .9fr .9fr 1.2fr 1.2fr .7fr .8fr .7fr;padding:7px 10px;border-bottom:1px solid var(--border);align-items:center;transition:background .1s}
+.perf-row:last-child{border-bottom:none}
+.perf-row:hover{background:var(--bg3)}
+.perf-stat{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:500;color:var(--tx2)}
+.rank-pill{display:inline-block;padding:2px 7px;background:var(--gold-bg);color:var(--gold);border-radius:20px;font-family:var(--mono);font-size:10px;font-weight:700}
+
+/* COMPARE */
+.cmp-select-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.cmp-sel{flex:1;min-width:160px;background:var(--bg3);border:1px solid var(--border);color:var(--tx1);padding:7px 11px;border-radius:var(--r-sm);font-size:12px;font-family:var(--font);cursor:pointer;outline:none}
+.cmp-vs{font-size:11px;font-weight:700;color:var(--tx3);flex-shrink:0}
+.cmp-radar-wrap{position:relative;height:300px}
+.cmp-stat-grid{display:grid;grid-template-columns:1fr auto 1fr;gap:0;margin-top:12px}
+.cmp-stat-a{text-align:right;font-family:var(--mono);font-size:12px;font-weight:600;padding:5px 10px 5px 0;border-bottom:1px solid var(--border)}
+.cmp-stat-k{text-align:center;font-size:10px;font-weight:700;color:var(--tx3);letter-spacing:.4px;text-transform:uppercase;padding:5px 8px;border-bottom:1px solid var(--border);white-space:nowrap}
+.cmp-stat-b{text-align:left;font-family:var(--mono);font-size:12px;font-weight:600;padding:5px 0 5px 10px;border-bottom:1px solid var(--border)}
+.cmp-win{color:var(--green)}
+.cmp-lose{color:var(--red)}
+.cmp-tie{color:var(--tx3)}
+
+/* CLASS */
+.class-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:12px;display:flex;flex-direction:column;gap:5px;transition:all .18s;cursor:pointer}
+.class-card:hover{box-shadow:var(--sh);transform:translateY(-1px)}
+.cc-head{display:flex;align-items:center;gap:6px}
+.cc-name{font-size:13px;font-weight:700;color:var(--tx1)}
+.cc-cnt{font-size:10px;color:var(--tx3);margin-left:auto;font-family:var(--mono)}
+.cc-row{display:flex;justify-content:space-between;font-size:11px}
+.cc-row-lbl{color:var(--tx3)}
+.cc-row-val{font-family:var(--mono);font-weight:600;color:var(--tx1)}
+
+/* RATINGS */
+.ratings-col{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.ratings-col-head{padding:8px 12px;font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;border-bottom:1px solid var(--border);background:var(--bg3)}
+.rating-row{display:grid;grid-template-columns:18px 1fr 32px 32px;gap:5px;padding:7px 12px;align-items:center;cursor:pointer;transition:background .1s;border-bottom:1px solid var(--border)}
+.rating-row:last-child{border-bottom:none}
+.rating-row:hover{background:var(--accent-ll)}
+
+/* HEATMAP */
+.heatmap-wrap{overflow:auto;max-height:460px;border-radius:var(--r-sm);border:1px solid var(--border)}
+.hm-tbl{border-collapse:collapse;font-size:11px;font-family:var(--mono);width:100%}
+.hm-tbl th{padding:7px 10px;font-size:9px;font-weight:700;color:var(--tx3);letter-spacing:.5px;text-transform:uppercase;background:var(--bg3);white-space:nowrap;position:sticky;top:0;z-index:3;border-bottom:1px solid var(--border)}
+.hm-tbl th:first-child{text-align:left;min-width:150px;position:sticky;left:0;z-index:4;background:var(--bg3)}
+.hm-tbl td{padding:5px 8px;text-align:center;border-bottom:1px solid var(--border);font-size:10px;font-weight:600;white-space:nowrap;transition:opacity .12s}
+.hm-tbl td:first-child{text-align:left;font-family:var(--font);font-size:11px;font-weight:500;color:var(--tx1);background:var(--surface);padding:5px 12px;position:sticky;left:0;z-index:2}
+.hm-tbl tr:last-child td{border-bottom:none}
+.hm-tbl tr:hover td{opacity:.8}
+.hm-s{background:#78350f;color:#fbbf24}.hm-a{background:var(--accent-ll);color:var(--accent-text)}
+.hm-b{background:#082f49;color:#38bdf8}.hm-c{background:#064e3b;color:#34d399}
+.hm-d{background:var(--bg3);color:var(--tx3)}.hm-na{background:var(--bg3);color:var(--tx4)}
+
+/* ALERTS */
+.alert-row{display:flex;align-items:flex-start;gap:8px;padding:8px 12px;border-radius:var(--r-sm);background:var(--red-bg);border:1px solid var(--red-light);font-size:11px;color:var(--red);font-weight:500;cursor:pointer;transition:background .12s;animation:fadeUp .25s ease both}
+.alert-row:hover{background:#7f1d1d;color:#fca5a5}
+.alert-row.warn{background:var(--gold-bg);border-color:#b45309;color:var(--gold)}
+.alert-row.warn:hover{background:#78350f}
+.adot2{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:3px;animation:pulse 1.8s ease infinite}
+
+/* CV */
+.cv-pill{font-family:var(--mono);font-size:9px;font-weight:700;padding:2px 7px;border-radius:3px;white-space:nowrap}
+.cv-low{background:var(--green-bg);color:var(--green)}.cv-mid{background:var(--gold-bg);color:var(--gold)}.cv-hi{background:var(--red-bg);color:var(--red)}
+
+/* THREAT CARDS */
+.threat-card{background:var(--surface2);border:1px solid var(--opp-border);border-radius:var(--r);padding:10px 12px;transition:all .18s}
+.threat-card.high{border-color:var(--red-light);background:var(--red-bg)}
+.threat-card.high .threat-name{color:var(--red)}
+.threat-name{font-size:12px;font-weight:700;color:var(--opp)}
+.threat-cls{font-size:10px;color:var(--tx3);margin-top:1px}
+.threat-stats{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+.threat-stat{font-family:var(--mono);font-size:10px;font-weight:600;background:var(--bg3);padding:2px 6px;border-radius:3px;color:var(--tx2)}
+
+/* H2H TABLE */
+.h2h-tbl{width:100%;border-collapse:collapse;font-size:11px}
+.h2h-tbl th{padding:7px 10px;font-size:9px;font-weight:700;color:var(--tx3);letter-spacing:.5px;text-transform:uppercase;background:var(--bg3);border-bottom:1px solid var(--border);text-align:left}
+.h2h-tbl td{padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
+.h2h-tbl tr:last-child td{border-bottom:none}
+.h2h-tbl tr:hover td{background:var(--bg3)}
+.h2h-adv{font-size:9px;font-weight:700;padding:2px 7px;border-radius:3px}
+.h2h-adv-our{background:var(--green-bg);color:var(--green)}
+.h2h-adv-opp{background:var(--red-bg);color:var(--red)}
+.h2h-adv-tie{background:var(--bg3);color:var(--tx3)}
+
+/* COMP CARD */
+.comp-cls-row{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)}
+.comp-cls-row:last-child{border-bottom:none}
+.comp-bar-wrap{display:flex;align-items:center;gap:8px;flex:1;margin:0 12px}
+.comp-bar-our{height:8px;border-radius:4px 0 0 4px;transition:width .6s}
+.comp-bar-opp{height:8px;border-radius:0 4px 4px 0;transition:width .6s}
+
+/* MODAL */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);z-index:1000;align-items:center;justify-content:center}
+.overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:24px 26px;min-width:420px;max-width:520px;width:90%;box-shadow:var(--sh-lg);animation:slideDown .2s ease;position:relative}
+.modal-title{font-size:16px;font-weight:800;color:var(--tx1);margin-bottom:3px}
+.modal-sub{font-size:12px;color:var(--tx3);margin-bottom:16px}
+.modal-x{position:absolute;top:14px;right:16px;background:none;border:none;font-size:20px;color:var(--tx3);cursor:pointer;line-height:1}
+.modal-x:hover{color:var(--tx1)}
+.drop-zone{border:2px dashed var(--border2);border-radius:var(--r);padding:28px 18px;text-align:center;cursor:pointer;transition:all .15s;background:var(--bg3)}
+.drop-zone:hover,.drop-zone.over{border-color:var(--accent-l);background:var(--accent-ll)}
+.drop-icon{font-size:28px;margin-bottom:10px}
+.drop-text{font-size:13px;font-weight:700;color:var(--tx2)}
+.drop-hint{font-size:11px;color:var(--tx3);margin-top:4px}
+.file-list{margin-top:10px;display:flex;flex-direction:column;gap:5px;max-height:130px;overflow-y:auto}
+.file-item{display:flex;align-items:center;justify-content:space-between;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r-sm);padding:5px 10px}
+.fi-name{font-size:12px;color:var(--tx2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:270px}
+.fi-size{font-family:var(--mono);font-size:10px;color:var(--tx3);flex-shrink:0}
+.fi-del{background:none;border:none;color:var(--red);cursor:pointer;font-size:15px}
+.modal-actions{display:flex;gap:8px;margin-top:16px;justify-content:flex-end}
+.confirm-modal{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:28px;min-width:320px;text-align:center;box-shadow:var(--sh-lg);animation:slideDown .2s ease}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--tx1);color:var(--bg);border-radius:var(--r-sm);padding:10px 16px;font-size:12px;font-weight:600;z-index:2000;display:none;box-shadow:var(--sh-lg);animation:slideDown .2s ease}
+.toast.show{display:block}
+.toast.ok{background:var(--green);color:#0f172a}
+.toast.info{background:var(--blue);color:#0f172a}
+.toast.red{background:var(--red);color:#0f172a}
+
+/* MOBILE */
+.drawer-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:150}
+.drawer-bg.show{display:block}
+@media(max-width:1200px){:root{--sb-w:230px}}
+@media(max-width:1024px){.sb-opp{display:none!important}}
+@media(max-width:768px){
+  :root{--sb-w:256px}
+  .sidebar{position:fixed;top:52px;left:0;height:calc(100vh - 52px);z-index:160;transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .hamburger{display:flex}
+  .main{padding:10px}
+  .col2{grid-template-columns:1fr}
+  .ph-grid{grid-template-columns:1fr}
+  .ph-right{display:none}
+  .ph-center{flex-direction:column;align-items:stretch}
+}
+/* HELP MODAL */
+.help-tab{transition:color .15s,border-color .15s}
+.help-tab.active{color:var(--accent-text)!important;border-bottom-color:var(--accent)!important}
+.help-pane{display:none}
+.help-pane.active{display:block}
+.help-section{margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--border)}
+.help-section:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.help-sec-title{font-size:13px;font-weight:800;color:var(--tx1);margin-bottom:9px;display:flex;align-items:center;gap:6px}
+.help-body{font-size:12px;color:var(--tx2);line-height:1.7}
+.help-callout{font-size:11px;color:var(--tx2);background:var(--bg3);border-left:3px solid var(--accent);padding:8px 11px;border-radius:0 6px 6px 0;margin-top:8px;line-height:1.6}
+.help-chip{display:inline-block;font-family:var(--mono);font-size:10px;font-weight:700;padding:1px 7px;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;color:var(--tx1)}
+.help-chip.green{background:var(--green-bg);border-color:#047857;color:var(--green)}
+.help-chip.red{background:var(--red-bg);border-color:var(--red-light);color:var(--red)}
+.help-chip.gold{background:var(--gold-bg);border-color:#b45309;color:var(--gold)}
+.help-chip.opp{background:var(--opp-bg);border-color:var(--opp-border);color:var(--opp)}
+.help-steps{display:flex;flex-direction:column;gap:10px;margin-top:8px}
+.help-step{display:flex;gap:10px;align-items:flex-start;font-size:12px;color:var(--tx2);line-height:1.6}
+.help-step-n{width:22px;height:22px;border-radius:50%;background:var(--accent-ll);color:var(--accent-text);font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.help-table-wrap{overflow-x:auto;border-radius:var(--r-sm);border:1px solid var(--border)}
+.help-tbl{width:100%;border-collapse:collapse;font-size:11px}
+.help-tbl th{padding:7px 12px;font-size:9px;font-weight:700;color:var(--tx3);letter-spacing:.5px;text-transform:uppercase;background:var(--bg3);border-bottom:1px solid var(--border);text-align:left}
+.help-tbl td{padding:7px 12px;border-bottom:1px solid var(--border);color:var(--tx2);line-height:1.5;vertical-align:top}
+.help-tbl tr:last-child td{border-bottom:none}
+.help-tbl tr:hover td{background:var(--bg3)}
+.help-tbl code{font-family:var(--mono);font-size:10px;font-weight:600;background:var(--bg3);padding:1px 5px;border-radius:3px;color:var(--accent-l)}
+.help-cols2{display:grid;grid-template-columns:1fr 1fr;gap:8px 20px}
+@media(max-width:560px){.help-cols2{grid-template-columns:1fr}}
+.help-row-item{font-size:11px;color:var(--tx2);padding:4px 0;border-bottom:1px solid var(--border);line-height:1.5}
+.help-row-item:last-child{border-bottom:none}
+.help-card-demo{display:flex;gap:14px;align-items:flex-start;background:var(--bg3);border-radius:var(--r);padding:12px;margin-top:8px;flex-wrap:wrap}
+.help-demo-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;min-width:120px}
+.help-tier-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:8px 12px;display:flex;flex-direction:column;gap:4px;align-items:center;text-align:center;font-size:11px;color:var(--tx2)}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- NAV -->
+<nav class="topnav">
+  <button class="hamburger" id="hamBtn" aria-label="เมนู">☰</button>
+  <div class="logo">
+    <div class="logo-badge">⚔️</div>
+    <div><div class="logo-name">GVG Analytics</div><div class="logo-sub">Match Analytics</div></div>
+  </div>
+  <div class="nav-div"></div>
+  <div class="mode-tabs">
+    <button class="tab active" id="tabPlayer" onclick="switchMode('player')">สถิติผู้เล่น</button>
+    <button class="tab" id="tabClass" onclick="switchMode('class')">วิเคราะห์คลาส</button>
+    <button class="tab" id="tabRoster" onclick="switchMode('roster')">ภาพรวมทีม</button>
+    <button class="tab" id="tabCompare" onclick="switchMode('compare')">เปรียบเทียบ</button>
+    <button class="tab" id="tabOpponent" onclick="switchMode('opponent')" style="color:var(--opp)">🎯 วิเคราะห์ศัตรู</button>
+  </div>
+  <div class="spacer"></div>
+  <button class="btn" onclick="sel('helpModal').classList.add('open')" style="margin-right:4px" title="คู่มือการใช้งาน">📖 คู่มือ</button>
+  <button class="btn btn-danger" onclick="sel('confirmModal').classList.add('open')" style="margin-right:4px">ล้างข้อมูล</button>
+  <button class="btn" onclick="exportReport()">ส่งออก</button>
+</nav>
+
+<div class="drawer-bg" id="drawerBg"></div>
+<div class="body">
+
+<!-- LEFT SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sb-top">
+    <div class="sb-label">กรองตามคลาส</div>
+    <select class="sb-select" id="classFilter">
+      <option value="ALL">ทุกคลาส</option>
+      <option value="Numina">🏮 Numina</option>
+      <option value="Celestune">🪕 Celestune</option>
+      <option value="Ironclad">👊 Ironclad</option>
+      <option value="Nightwalker">🗡️ Nightwalker</option>
+      <option value="Sylph">🪭 Sylph</option>
+      <option value="Bloodstorm">🔱 Bloodstorm</option>
+      <option value="Longyin">🗲 Longyin</option>
+    </select>
+  </div>
+  <div class="sb-rank-hdr">
+    <span class="sb-rank-lbl">อันดับ</span>
+    <span class="sb-cnt" id="totalCnt">0</span>
+  </div>
+  <div class="player-scroll" id="playerList"></div>
+</aside>
+
+<!-- MAIN -->
+<main class="main" id="mainArea">
+
+  <!-- PLAYER STATS -->
+  <div id="playerPanel" style="display:flex;flex-direction:column;gap:11px">
+    <div class="card" style="padding:13px 18px">
+      <div class="ph-grid">
+        <div class="ph-left">
+          <div class="avatar" id="avEl">⚔️</div>
+          <div>
+            <div class="ph-name" id="phName">เลือกผู้เล่น</div>
+            <div class="ph-badges">
+              <span class="badge badge-cls" id="phCls">—</span>
+              <span class="badge badge-rank" id="phRank">อันดับ —</span>
+              <span class="badge" id="phRating" style="display:none">—</span>
+              <span id="phMatchCnt" style="font-family:var(--mono);font-size:10px;color:var(--tx3)"></span>
+            </div>
+          </div>
+        </div>
+        <div class="ph-center">
+          <div class="match-box">
+            <div class="match-box-lbl">แมตช์ทีมเรา</div>
+            <div style="display:flex;gap:6px">
+              <button class="match-btn" id="matchBtn" style="min-width:140px">
+                <span id="matchBtnTxt">เลือกแมตช์…</span>
+                <span class="match-arrow" id="matchArrow">▾</span>
+              </button>
+              <button class="btn btn-primary" id="btnUpload" style="padding:6px 12px;display:flex;align-items:center;gap:4px">
+                <span style="font-size:14px;font-weight:700;line-height:1">+</span> อัปโหลด
+              </button>
+            </div>
+          </div>
+          <div class="match-box">
+            <div class="match-box-lbl" style="color:var(--opp)">แมตช์ฝ่ายตรงข้าม</div>
+            <div style="display:flex;gap:6px">
+              <button class="match-btn opp" id="oppMatchBtn" style="min-width:140px">
+                <span id="oppMatchBtnTxt">เลือกแมตช์…</span>
+                <span class="match-arrow" id="oppMatchArrow">▾</span>
+              </button>
+              <button class="btn btn-opp" id="btnOppUpload" style="padding:6px 12px;display:flex;align-items:center;gap:4px">
+                <span style="font-size:14px;font-weight:700;line-height:1">+</span> อัปโหลด
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="ph-right" id="oppHdr">
+          <div style="text-align:right">
+            <div class="ph-name opp" id="oppNameEl">—</div>
+            <div class="ph-badges" style="justify-content:flex-end">
+              <span class="badge" id="oppRatingEl" style="display:none">—</span>
+              <span class="badge badge-blue" id="oppRankEl">Rank —</span>
+              <span class="badge badge-blue" id="oppClsEl">—</span>
+            </div>
+          </div>
+          <div class="avatar opp" id="oppAvEl">🪕</div>
+        </div>
+      </div>
+    </div>
+    <div id="noPlayerState" class="card">
+      <div class="empty-state">
+        <div class="empty-icon">⚔️</div>
+        <div class="empty-title">ยังไม่ได้เลือกผู้เล่น</div>
+        <div class="empty-sub">คลิกผู้เล่นในแถบซ้ายเพื่อดูสถิติละเอียด ประวัติฟอร์ม และเปรียบเทียบแมตช์</div>
+      </div>
+    </div>
+    <div id="playerContent" style="display:none;flex-direction:column;gap:11px">
+      <div class="col2">
+        <div class="card">
+          <div class="card-hdr">
+            <div><div class="card-title">สรุปแมตช์ — ทีมเรา</div></div>
+            <span class="card-tag" id="matchSumLbl"></span>
+          </div>
+          <div id="matchSumCards" style="display:grid;grid-template-columns:repeat(5,1fr);gap:7px"></div>
+        </div>
+        <div class="card opp-card">
+          <div class="card-hdr">
+            <div><div class="card-title" style="color:var(--opp)">สรุปแมตช์ — ฝ่ายตรงข้าม</div></div>
+            <span class="card-tag" id="oppMatchSumLbl" style="color:var(--opp);background:var(--opp-bg)"></span>
+          </div>
+          <div id="oppSumCards" style="display:grid;grid-template-columns:repeat(5,1fr);gap:7px"></div>
+        </div>
+      </div>
+      <div class="divider"><span class="divider-lbl">ฟอร์มผู้เล่น</span></div>
+      <div class="col2">
+        <div class="card">
+          <div class="card-hdr" style="margin-bottom:12px"><div><div class="card-title">Combat — ทีมเรา</div><div class="card-sub">▲▼ เทียบกับค่าเฉลี่ยส่วนตัว</div></div></div>
+          <div id="combatCards" style="display:grid;grid-template-columns:repeat(5,1fr);gap:7px"></div>
+        </div>
+        <div class="card opp-card">
+          <div class="card-hdr" style="margin-bottom:12px"><div><div class="card-title" style="color:var(--opp)">Combat — ฝ่ายตรงข้าม</div><div class="card-sub">▲▼ เทียบกับค่าเฉลี่ยส่วนตัว</div></div></div>
+          <div id="oppCombatCards" style="display:grid;grid-template-columns:repeat(5,1fr);gap:7px"></div>
+        </div>
+      </div>
+      <div class="col2">
+        <div class="card">
+          <div class="card-hdr" style="margin-bottom:12px"><div><div class="card-title">Support — ทีมเรา</div><div class="card-sub">▲▼ เทียบกับค่าเฉลี่ยส่วนตัว</div></div></div>
+          <div id="supportCards" style="display:grid;grid-template-columns:repeat(4,1fr);gap:7px"></div>
+        </div>
+        <div class="card opp-card">
+          <div class="card-hdr" style="margin-bottom:12px"><div><div class="card-title" style="color:var(--opp)">Support — ฝ่ายตรงข้าม</div><div class="card-sub">▲▼ เทียบกับค่าเฉลี่ยส่วนตัว</div></div></div>
+          <div id="oppSupportCards" style="display:grid;grid-template-columns:repeat(4,1fr);gap:7px"></div>
+        </div>
+      </div>
+      <div class="divider"><span class="divider-lbl">อันดับสูงสุดในแมตช์</span></div>
+      <div class="col2">
+        <div class="card">
+          <div class="card-hdr">
+            <div><div class="card-title">Top 10 — ทีมเรา</div></div>
+            <select id="ourTop10Stat" class="sb-select" style="width:auto;padding:4px 8px;font-size:11px">
+              <option value="DmgPlayer" selected>DMG Player</option><option value="Kill">Kill</option>
+              <option value="Assist">Assist</option><option value="DmgTower">DMG Tower</option><option value="Heal">Heal</option>
+            </select>
+          </div>
+          <div id="ourTop10"></div>
+        </div>
+        <div class="card opp-card">
+          <div class="card-hdr">
+            <div><div class="card-title" style="color:var(--opp)">Top 10 — ฝ่ายตรงข้าม</div></div>
+            <select id="oppTop10Stat" class="sb-select" style="width:auto;padding:4px 8px;font-size:11px">
+              <option value="DmgPlayer" selected>DMG Player</option><option value="Kill">Kill</option>
+              <option value="Assist">Assist</option><option value="DmgTower">DMG Tower</option><option value="Heal">Heal</option>
+            </select>
+          </div>
+          <div id="oppTop10"></div>
+        </div>
+      </div>
+      <div class="divider"><div style="text-align:center"><span class="divider-lbl">ค่าเฉลี่ยฟอร์ม</span></div></div>
+      <div class="card">
+        <div class="card-hdr">
+          <div><div class="card-title">Performance Average</div><div class="card-sub" id="perfMatchCnt">—</div></div>
+          <div style="display:flex;gap:6px;align-items:center;font-size:10px;font-weight:700;flex-wrap:wrap">
+            <span style="color:var(--green)">■ ≥90%</span><span style="color:var(--gold)">■ ≥60%</span><span style="color:var(--red)">■ &lt;60%</span>
+          </div>
+        </div>
+        <div class="perf-hdr">
+          <span style="text-align:left">สถิติ</span><span>ล่าสุด</span><span>เฉลี่ย</span>
+          <span style="color:var(--green)">แมตช์ดีสุด</span><span style="color:var(--red)">แมตช์แย่สุด</span>
+          <span style="color:var(--gold)">% ดีสุด</span><span>K/D</span><span>อันดับรวม</span>
+        </div>
+        <div id="perfTable"></div>
+      </div>
+      <div class="divider"><div style="text-align:center"><span class="divider-lbl">ประวัติสกอร์</span><div class="divider-sub">แนวโน้มในทุกแมตช์ที่บันทึก</div></div></div>
+      <div class="card">
+        <div class="card-hdr">
+          <div><div class="card-title">ประวัติสกอร์</div><div class="card-sub">★ จุดทอง = แมตช์ที่เลือก</div></div>
+          <select id="histStatSel" class="sb-select" style="width:auto;padding:5px 10px;font-size:12px">
+            <option value="Kill">Kill</option><option value="Assist">Assist</option>
+            <option value="DmgPlayer" selected>DMG Player</option><option value="DmgTower">DMG Tower</option>
+            <option value="Heal">Heal</option><option value="DamageTaken">DMG Taken</option>
+            <option value="Death">Death</option><option value="Revive">Revive</option>
+            <option value="Resource">Resource</option>
+          </select>
+        </div>
+        <div style="position:relative;height:220px"><canvas id="histChart"></canvas></div>
+      </div>
+      <div class="divider"><div style="text-align:center"><span class="divider-lbl">เปรียบเทียบทีม</span></div></div>
+      <div class="card">
+        <div class="card-hdr">
+          <div>
+            <div class="card-title">ค่ารวมทีม — เปรียบเทียบมาตรฐาน</div>
+            <div class="card-sub">ทีมเรา vs ศัตรู · แท่ง = % สัดส่วนของแต่ละฝั่ง · <span style="color:#818cf8">■ ทีมเรา</span> · <span style="color:#f87171">■ ศัตรู</span></div>
+          </div>
+          <select id="cmpMatchSel" class="sb-select" style="width:auto;padding:5px 10px;font-size:12px"></select>
+        </div>
+        <div style="position:relative;height:380px"><canvas id="cmpChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CLASS ANALYSIS -->
+  <div id="classPanel" style="display:none;flex-direction:column;gap:11px">
+    <div class="card">
+      <div class="card-hdr">
+        <div><div class="card-title">ภาพรวมคลาส</div><div class="card-sub">ค่าเฉลี่ย stats ตามคลาส</div></div>
+        <select id="classMatchSel" class="sb-select" style="width:auto;padding:5px 10px;font-size:12px"></select>
+      </div>
+      <div id="classCards" class="col3"></div>
+    </div>
+    <div class="col2">
+      <div class="card">
+        <div class="card-hdr" style="margin-bottom:10px"><div><div class="card-title">Radar — ค่ามาตรฐาน</div></div></div>
+        <div style="position:relative;height:280px"><canvas id="radarChart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-hdr" style="margin-bottom:6px">
+          <div>
+            <div class="card-title">เปรียบเทียบ Bar</div>
+            <div style="display:flex;gap:10px;margin-top:4px;font-size:10px;font-weight:700">
+              <span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#818cf8;opacity:.85"></span>ทีมเรา</span>
+              <span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#38bdf8;opacity:.85"></span>ฝ่ายตรงข้าม</span>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">
+            <select id="barStatSel" class="sb-select" style="width:auto;padding:4px 8px;font-size:11px">
+              <option value="Kill">Kill</option><option value="Assist">Assist</option>
+              <option value="DmgPlayer" selected>DMG Player</option><option value="DmgTower">DMG Tower</option><option value="Heal">Heal</option>
+            </select>
+            <select id="barOppMatchSel" class="sb-select" style="width:auto;padding:4px 8px;font-size:10px;color:var(--opp);background:var(--opp-bg);border-color:var(--opp-border)">
+              <option value="">🎯 ฝ่ายตรงข้าม (ทุกแมตช์)</option>
+            </select>
+          </div>
+        </div>
+        <div style="position:relative;height:280px"><canvas id="barChart"></canvas></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hdr" style="margin-bottom:12px">
+        <div><div class="card-title">คะแนนผู้เล่น</div><div class="card-sub">คะแนนถ่วงน้ำหนักตามคลาส</div></div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap">
+          <span class="tier t-s" style="padding:3px 8px">S ≥70</span><span class="tier t-a" style="padding:3px 8px">A ≥65</span>
+          <span class="tier t-b" style="padding:3px 8px">B ≥50</span><span class="tier t-c" style="padding:3px 8px">C ≥35</span>
+          <span class="tier t-d" style="padding:3px 8px">D &lt;35</span>
+        </div>
+      </div>
+      <div id="ratingsTable"></div>
+    </div>
+  </div>
+
+  <!-- ROSTER OVERVIEW -->
+  <div id="rosterPanel" style="display:none;flex-direction:column;gap:11px">
+    <div class="card">
+      <div class="card-hdr" style="margin-bottom:10px">
+        <div><div class="card-title">⚠️ แจ้งเตือนต่ำกว่ามาตรฐาน</div><div class="card-sub">ผู้เล่นที่ต่ำกว่า median ของคลาส 2 แมตช์ขึ้นไปติดต่อกัน</div></div>
+        <span id="alertCnt" class="sb-cnt" style="color:var(--red);background:var(--red-bg)">0</span>
+      </div>
+      <div id="alertsList" style="display:flex;flex-direction:column;gap:5px"></div>
+    </div>
+    <div class="card">
+      <div class="card-hdr">
+        <div><div class="card-title">Heatmap ฟอร์ม</div><div class="card-sub">ผู้เล่น × แมตช์ — คลิกแถวเพื่อดูรายละเอียด</div></div>
+        <select id="hmStatSel" class="sb-select" style="width:auto;padding:5px 10px;font-size:12px">
+          <option value="rating">คะแนน (S/A/B/C/D)</option>
+          <option value="DmgPlayer">DMG Player</option><option value="Kill">Kill</option>
+          <option value="Assist">Assist</option><option value="DmgTower">DMG Tower</option>
+          <option value="Heal">Heal</option><option value="Death">Death</option>
+        </select>
+      </div>
+      <div class="heatmap-wrap"><table class="hm-tbl" id="hmTable"></table></div>
+    </div>
+    <div class="col2">
+      <div class="card">
+        <div class="card-hdr" style="margin-bottom:12px">
+          <div><div class="card-title">ความสม่ำเสมอ</div><div class="card-sub">CV = σ/μ ของ DMG Player — ยิ่งต่ำยิ่งสม่ำเสมอ</div></div>
+          <div style="display:flex;gap:5px"><span class="cv-pill cv-low">สม่ำเสมอ</span><span class="cv-pill cv-mid">ขึ้นๆ ลงๆ</span><span class="cv-pill cv-hi">ผันผวน</span></div>
+        </div>
+        <div id="cvList" style="display:flex;flex-direction:column;gap:3px;max-height:340px;overflow-y:auto"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:11px">
+        <div class="card">
+          <div class="card-hdr" style="margin-bottom:10px"><div><div class="card-title">Clutch Rate</div><div class="card-sub">Kill ÷ (Kill+Death) — DPS/Bruiser</div></div></div>
+          <div id="clutchList" style="display:flex;flex-direction:column;gap:5px;max-height:180px;overflow-y:auto"></div>
+        </div>
+        <div class="card">
+          <div class="card-hdr" style="margin-bottom:10px"><div><div class="card-title">ประสิทธิภาพ Support</div><div class="card-sub">Sylph: Heal ÷ DMG Taken ของทีม</div></div></div>
+          <div id="suppEffList" style="display:flex;flex-direction:column;gap:5px;max-height:180px;overflow-y:auto"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hdr">
+        <div><div class="card-title">ฟอร์มเทียบ Median ของคลาส</div><div class="card-sub">เขียว = เหนือ median · แดง = ต่ำกว่า · % แสดงความต่าง</div></div>
+        <select id="medianMatchSel" class="sb-select" style="width:auto;padding:5px 10px;font-size:12px"></select>
+      </div>
+      <div style="overflow-x:auto"><table class="hm-tbl" id="medianTable" style="min-width:600px"></table></div>
+    </div>
+  </div>
+
+  <!-- COMPARE -->
+  <div id="comparePanel" style="display:none;flex-direction:column;gap:11px">
+    <div class="card">
+      <div class="card-hdr" style="margin-bottom:14px">
+        <div><div class="card-title">เปรียบเทียบผู้เล่น</div><div class="card-sub">เลือกผู้เล่น 2 คนเพื่อเปรียบเทียบแบบ side-by-side</div></div>
+      </div>
+      <div class="cmp-select-row">
+        <select id="cmpSelA" class="cmp-sel"><option value="">— เลือกผู้เล่น A —</option></select>
+        <span class="cmp-vs">VS</span>
+        <select id="cmpSelB" class="cmp-sel"><option value="">— เลือกผู้เล่น B —</option></select>
+        <select id="cmpMatchSelPlayers" class="cmp-sel" style="flex:0.8;min-width:140px"><option value="">— ทุกแมตช์ (เฉลี่ย) —</option></select>
+      </div>
+      <div class="cmp-radar-wrap"><canvas id="cmpRadar"></canvas></div>
+    </div>
+    <div class="card" id="cmpStatCard" style="display:none">
+      <div class="card-hdr" style="margin-bottom:12px">
+        <div><div class="card-title" id="cmpStatTitle">Stat comparison</div></div>
+        <div style="display:flex;gap:8px;font-size:11px;font-weight:700">
+          <span style="color:var(--accent)">■ ผู้เล่น A</span><span style="color:var(--red)">■ ผู้เล่น B</span>
+        </div>
+      </div>
+      <div id="cmpStatRows"></div>
+    </div>
+  </div>
+
+  <!-- OPPONENT ANALYSIS -->
+  <div id="opponentPanel" style="display:none;flex-direction:column;gap:11px">
+    <div class="col2">
+      <div class="card opp-card">
+        <div class="card-hdr" style="margin-bottom:12px">
+          <div><div class="card-title" style="color:var(--opp)">🏗️ โครงสร้างทีม</div><div class="card-sub" id="oppCompSubLbl">ฝ่ายตรงข้าม</div></div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <button class="btn btn-opp" id="btnOppUpload2" style="padding:5px 10px;font-size:11px">+ อัปโหลด CSV ศัตรู</button>
+          </div>
+        </div>
+        <div id="oppCompCards" style="display:flex;flex-direction:column;gap:0"></div>
+      </div>
+      <div class="card opp-card">
+        <div class="card-hdr" style="margin-bottom:12px">
+          <div><div class="card-title" style="color:var(--opp)">📊 เปรียบเทียบโครงสร้าง</div><div class="card-sub">จำนวนผู้เล่นแต่ละคลาส — ทีมเรา vs ศัตรู</div></div>
+        </div>
+        <div id="compStructure"></div>
+      </div>
+    </div>
+    <div class="card opp-card" style="border-color:var(--red-light)">
+      <div class="card-hdr" style="margin-bottom:12px">
+        <div><div class="card-title" style="color:var(--red)">🚨 Threat Watch List</div><div class="card-sub">ผู้เล่นศัตรูที่ค่าสูงกว่า median ของทีมเราในคลาสเดียวกัน</div></div>
+        <span id="threatCnt" class="sb-cnt" style="color:var(--red);background:var(--red-bg)">0</span>
+      </div>
+      <div id="threatList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px"></div>
+    </div>
+    <div class="card opp-card">
+      <div class="card-hdr" style="margin-bottom:12px">
+        <div><div class="card-title" style="color:var(--opp)">⚔️ Head-to-Head Matchup</div><div class="card-sub">เปรียบ avg stats ตามคลาส — ทีมเรา vs ศัตรู</div></div>
+        <select id="h2hStatSel" class="sb-select" style="width:auto;padding:4px 8px;font-size:11px">
+          <option value="DmgPlayer" selected>DMG Player</option><option value="Kill">Kill</option>
+          <option value="Assist">Assist</option><option value="DmgTower">DMG Tower</option>
+          <option value="Heal">Heal</option><option value="DamageTaken">DMG Taken</option>
+        </select>
+      </div>
+      <div style="overflow-x:auto"><table class="h2h-tbl" id="h2hTable"></table></div>
+    </div>
+    <div class="card opp-card" id="oppTrendCard">
+      <div class="card-hdr" style="margin-bottom:12px">
+        <div>
+          <div class="card-title" style="color:var(--opp)">📊 เปรียบเทียบ — ทีมเรา vs ศัตรู</div>
+          <div class="card-sub">แท่ง <span style="color:#818cf8;font-weight:700">■ ม่วง</span> = ทีมเรา · <span style="color:#38bdf8;font-weight:700">■ ฟ้า</span> = ศัตรู · <span style="color:#f87171;font-weight:700">■ แดง</span> = ศัตรูเกิน · คลิกแท่งเพื่อดู trend</div>
+        </div>
+        <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
+          <div style="display:flex;background:var(--bg3);border:1px solid var(--border);border-radius:6px;overflow:hidden" id="trendGroupBtns">
+            <button class="tg-btn active" data-group="team"      style="padding:4px 10px;font-size:11px;font-weight:600;background:var(--accent-ll);color:var(--accent-text);border:none;cursor:pointer;font-family:var(--font)">ทีมรวม</button>
+            <button class="tg-btn" data-group="Numina"           style="padding:4px 10px;font-size:11px;font-weight:600;background:none;color:var(--tx3);border:none;cursor:pointer;font-family:var(--font)">Numina</button>
+            <button class="tg-btn" data-group="Ironclad"         style="padding:4px 10px;font-size:11px;font-weight:600;background:none;color:var(--tx3);border:none;cursor:pointer;font-family:var(--font)">Ironclad</button>
+            <button class="tg-btn" data-group="Sylph"            style="padding:4px 10px;font-size:11px;font-weight:600;background:none;color:var(--tx3);border:none;cursor:pointer;font-family:var(--font)">Sylph</button>
+            <button class="tg-btn" data-group="Bloodstorm"       style="padding:4px 10px;font-size:11px;font-weight:600;background:none;color:var(--tx3);border:none;cursor:pointer;font-family:var(--font)">Bloodstorm</button>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+        <span style="font-size:10px;font-weight:700;color:var(--tx3);letter-spacing:.5px;text-transform:uppercase">แมตช์ศัตรู</span>
+        <select id="barOppMatchSel" class="sb-select" style="width:auto;padding:4px 10px;font-size:11px;flex:1;max-width:280px"></select>
+      </div>
+      <div style="position:relative;height:340px"><canvas id="oppBarChart"></canvas></div>
+      <div id="oppBarSummary" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px"></div>
+      <div id="oppTrendDetail" style="display:none;margin-top:14px;border-top:1px solid var(--opp-border);padding-top:14px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <div style="font-size:12px;font-weight:700;color:var(--opp)" id="oppTrendDetailTitle">—</div>
+          <button onclick="sel('oppTrendDetail').style.display='none'" style="background:none;border:none;color:var(--tx3);font-size:16px;cursor:pointer;padding:0 4px">✕</button>
+        </div>
+        <div style="position:relative;height:220px"><canvas id="oppTrendDetailChart"></canvas></div>
+      </div>
+    </div>
+    <div class="card opp-card">
+      <div class="card-hdr">
+        <div><div class="card-title" style="color:var(--opp)">📋 รายชื่อผู้เล่นศัตรู</div><div class="card-sub" id="oppRosterMatchLbl">—</div></div>
+        <select id="oppRosterMatchSel" class="sb-select" style="width:auto;padding:4px 8px;font-size:11px"></select>
+      </div>
+      <div style="overflow-x:auto"><table class="h2h-tbl" id="oppRosterTable"></table></div>
+    </div>
+  </div>
+
+</main>
+
+<!-- RIGHT SIDEBAR — OPP -->
+<aside class="sb-opp" id="oppSidebar">
+  <div class="sb-top">
+    <div class="sb-label" style="color:var(--opp)">ทีมฝ่ายตรงข้าม</div>
+    <div style="font-size:11px;color:var(--tx3);margin-top:2px" id="oppSbName">ไม่มีข้อมูล</div>
+  </div>
+  <div class="sb-rank-hdr">
+    <span class="sb-rank-lbl" style="color:var(--opp)">อันดับศัตรู</span>
+    <span class="sb-cnt" id="oppCnt" style="background:var(--opp);color:#0f172a">0</span>
+  </div>
+  <div class="player-scroll" id="oppList"></div>
+</aside>
+
+</div>
+</div>
+
+<!-- Match dropdowns -->
+<div class="match-dropdown" id="matchDropdown">
+  <div class="match-dd-hdr" id="matchDdHdr">0 ไฟล์</div>
+  <div id="matchFileList"></div>
+  <div class="match-dd-footer" id="matchAddBtn">+ อัปโหลดไฟล์แมตช์เพิ่ม</div>
+</div>
+<div class="match-dropdown" id="oppMatchDropdown">
+  <div class="match-dd-hdr" id="oppMatchDdHdr">0 ไฟล์</div>
+  <div id="oppMatchFileList"></div>
+  <div class="match-dd-footer" id="oppMatchAddBtn">+ อัปโหลดไฟล์ฝ่ายตรงข้ามเพิ่ม</div>
+</div>
+
+<!-- Upload modals -->
+<div class="overlay" id="uploadModal">
+  <div class="modal">
+    <button class="modal-x" id="closeUpload">&times;</button>
+    <div class="modal-title">อัปโหลดไฟล์ CSV — ทีมเรา</div>
+    <div class="modal-sub">ลากวางหรือคลิกเพื่อเลือกไฟล์ — รองรับหลายไฟล์พร้อมกัน</div>
+    <div class="drop-zone" id="dropZone">
+      <div class="drop-icon">📂</div>
+      <div class="drop-text">วางไฟล์ CSV ที่นี่</div>
+      <div class="drop-hint">หรือคลิกเพื่อเลือกไฟล์</div>
+      <input type="file" id="fileInput" accept=".csv" multiple style="display:none">
+    </div>
+    <div class="file-list" id="pendingList"></div>
+    <div class="modal-actions">
+      <button class="btn" id="cancelUpload">ยกเลิก</button>
+      <button class="btn btn-primary" id="doImport" disabled>นำเข้าไฟล์</button>
+    </div>
+  </div>
+</div>
+<div class="overlay" id="oppUploadModal">
+  <div class="modal">
+    <button class="modal-x" id="closeOppUpload">&times;</button>
+    <div class="modal-title" style="color:var(--opp)">อัปโหลดไฟล์ CSV — ฝ่ายตรงข้าม</div>
+    <div class="modal-sub">ลากวางหรือคลิกเพื่อเลือกไฟล์ — รองรับหลายไฟล์พร้อมกัน</div>
+    <div class="drop-zone" id="oppDropZone" style="border-color:var(--opp-border);background:var(--opp-bg)">
+      <div class="drop-icon">📂</div>
+      <div class="drop-text" style="color:var(--opp)">วางไฟล์ CSV ฝ่ายตรงข้ามที่นี่</div>
+      <div class="drop-hint">หรือคลิกเพื่อเลือกไฟล์</div>
+      <input type="file" id="oppFileInput" accept=".csv" multiple style="display:none">
+    </div>
+    <div class="file-list" id="oppPendingList"></div>
+    <div class="modal-actions">
+      <button class="btn" id="cancelOppUpload">ยกเลิก</button>
+      <button class="btn btn-opp" id="doOppImport" style="background:var(--opp);border-color:var(--opp);color:#f8fafc" disabled>นำเข้าไฟล์</button>
+    </div>
+  </div>
+</div>
+
+<!-- HELP MODAL -->
+<div class="overlay" id="helpModal" onclick="if(event.target===this)this.classList.remove('open')">
+<div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;width:min(820px,96vw);max-height:88vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.5);overflow:hidden;animation:slideDown .2s ease">
+  <div style="padding:18px 22px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:var(--bg)">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="width:34px;height:34px;background:var(--accent-ll);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px">📖</div>
+      <div>
+        <div style="font-size:15px;font-weight:800;color:var(--tx1)">คู่มือการใช้งาน</div>
+        <div style="font-size:11px;color:var(--tx3);margin-top:1px">GVG Analytics — อ่านตัวเลขและกราฟยังไง</div>
+      </div>
+    </div>
+    <button onclick="sel('helpModal').classList.remove('open')" style="background:none;border:none;color:var(--tx3);font-size:22px;cursor:pointer;line-height:1;padding:4px 6px;border-radius:6px" onmouseenter="this.style.background='var(--bg3)'" onmouseleave="this.style.background='none'">✕</button>
+  </div>
+  <div style="display:flex;gap:0;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg);overflow-x:auto">
+    <button class="help-tab active" data-htab="upload"  onclick="switchHelpTab('upload')"  style="padding:10px 16px;font-size:12px;font-weight:600;border:none;background:none;cursor:pointer;font-family:var(--font);color:var(--tx3);border-bottom:2px solid transparent;white-space:nowrap">📂 เริ่มต้นใช้งาน</button>
+    <button class="help-tab" data-htab="stats"    onclick="switchHelpTab('stats')"   style="padding:10px 16px;font-size:12px;font-weight:600;border:none;background:none;cursor:pointer;font-family:var(--font);color:var(--tx3);border-bottom:2px solid transparent;white-space:nowrap">📊 สถิติผู้เล่น</button>
+    <button class="help-tab" data-htab="rating"   onclick="switchHelpTab('rating')"  style="padding:10px 16px;font-size:12px;font-weight:600;border:none;background:none;cursor:pointer;font-family:var(--font);color:var(--tx3);border-bottom:2px solid transparent;white-space:nowrap">🏆 Rating & Tier</button>
+    <button class="help-tab" data-htab="roster"   onclick="switchHelpTab('roster')"  style="padding:10px 16px;font-size:12px;font-weight:600;border:none;background:none;cursor:pointer;font-family:var(--font);color:var(--tx3);border-bottom:2px solid transparent;white-space:nowrap">🗂️ ภาพรวมทีม</button>
+    <button class="help-tab" data-htab="opp"      onclick="switchHelpTab('opp')"     style="padding:10px 16px;font-size:12px;font-weight:600;border:none;background:none;cursor:pointer;font-family:var(--font);color:var(--opp);border-bottom:2px solid transparent;white-space:nowrap">🎯 วิเคราะห์ศัตรู</button>
+    <button class="help-tab" data-htab="glossary" onclick="switchHelpTab('glossary')" style="padding:10px 16px;font-size:12px;font-weight:600;border:none;background:none;cursor:pointer;font-family:var(--font);color:var(--tx3);border-bottom:2px solid transparent;white-space:nowrap">📚 Glossary</button>
+  </div>
+  <div style="overflow-y:auto;flex:1;padding:20px 22px">
+    <div class="help-pane active" id="hpane-upload">
+      <div class="help-section">
+        <div class="help-sec-title">🚀 ขั้นตอนเริ่มต้น</div>
+        <div class="help-steps">
+          <div class="help-step"><span class="help-step-n">1</span><div><strong>อัปโหลด CSV ทีมเรา</strong> — กดปุ่ม <span class="help-chip">+ อัปโหลด</span> ตรงแถบกลาง เลือกไฟล์ .csv จาก game export ได้หลายไฟล์พร้อมกัน (= หลายแมตช์)</div></div>
+          <div class="help-step"><span class="help-step-n">2</span><div><strong>เลือกแมตช์ที่ต้องการดู</strong> — คลิก dropdown "เลือกแมตช์" แล้วเลือกไฟล์ที่ต้องการ</div></div>
+          <div class="help-step"><span class="help-step-n">3</span><div><strong>คลิกผู้เล่น</strong> ในแถบซ้ายเพื่อดูสถิติละเอียดของผู้เล่นคนนั้น</div></div>
+          <div class="help-step"><span class="help-step-n">4</span><div><strong>(ไม่บังคับ) อัปโหลด CSV ศัตรู</strong> — กดปุ่ม <span class="help-chip opp">+ อัปโหลด</span> สีฟ้า เพื่อเปิดฟีเจอร์วิเคราะห์ฝ่ายตรงข้าม</div></div>
+        </div>
+      </div>
+      <div class="help-section">
+        <div class="help-sec-title">📄 รูปแบบ CSV ที่รองรับ</div>
+        <div class="help-body">ไฟล์ต้องมี header row และคอลัมน์ต่อไปนี้ (ลำดับไม่สำคัญ):</div>
+        <div class="help-table-wrap">
+          <table class="help-tbl">
+            <tr><th>คอลัมน์</th><th>ตัวอย่างค่า</th><th>หมายเหตุ</th></tr>
+            <tr><td><code>IGN</code></td><td>PlayerName</td><td>ชื่อผู้เล่น — ใช้เป็น key หลัก</td></tr>
+            <tr><td><code>Class</code></td><td>Numina, Sylph…</td><td>คลาสตัวละคร</td></tr>
+            <tr><td><code>Kill</code></td><td>12</td><td></td></tr>
+            <tr><td><code>Assist</code></td><td>87</td><td></td></tr>
+            <tr><td><code>DmgPlayer</code></td><td>4500000</td><td>หน่วยเป็นตัวเลขดิบ</td></tr>
+            <tr><td><code>DmgTower</code></td><td>1200000</td><td></td></tr>
+            <tr><td><code>Heal</code></td><td>3800000</td><td>Sylph เป็นหลัก</td></tr>
+            <tr><td><code>DamageTaken</code></td><td>8900000</td><td>Ironclad เป็นหลัก</td></tr>
+            <tr><td><code>Death</code></td><td>5</td><td></td></tr>
+            <tr><td><code>Revive</code></td><td>3</td><td>Sylph เป็นหลัก</td></tr>
+            <tr><td><code>Resource</code></td><td>1820</td><td>ทรัพยากรที่เก็บได้</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="help-pane" id="hpane-stats">
+      <div class="help-section">
+        <div class="help-sec-title">📈 กราฟประวัติสกอร์</div>
+        <div class="help-body">แสดงค่า stat ที่เลือกของผู้เล่นในทุกแมตช์ที่บันทึก <strong style="color:#fbbf24">★ จุดทอง</strong> = แมตช์ที่กำลังดูอยู่</div>
+      </div>
+      <div class="help-section">
+        <div class="help-sec-title">🃏 Performance Cards (▲▼ vs average)</div>
+        <div class="help-body">การ์ดแต่ละใบแสดงค่าในแมตช์ปัจจุบัน เทียบกับค่าเฉลี่ยส่วนตัวของผู้เล่นในทุกแมตช์</div>
+      </div>
+    </div>
+    <div class="help-pane" id="hpane-rating">
+      <div class="help-section">
+        <div class="help-sec-title">🏆 ระบบ Tier (S/A/B/C/D)</div>
+        <div class="help-body">คะแนน Rating คำนวณจาก weighted average ของ stats ที่เกี่ยวข้องกับแต่ละคลาส</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin:10px 0">
+          <div class="help-tier-card"><span class="tier t-s" style="font-size:13px;padding:3px 10px">S</span><div>≥ 70 คะแนน</div></div>
+          <div class="help-tier-card"><span class="tier t-a" style="font-size:13px;padding:3px 10px">A</span><div>≥ 65 คะแนน</div></div>
+          <div class="help-tier-card"><span class="tier t-b" style="font-size:13px;padding:3px 10px">B</span><div>≥ 50 คะแนน</div></div>
+          <div class="help-tier-card"><span class="tier t-c" style="font-size:13px;padding:3px 10px">C</span><div>≥ 35 คะแนน</div></div>
+          <div class="help-tier-card"><span class="tier t-d" style="font-size:13px;padding:3px 10px">D</span><div>&lt; 35 คะแนน</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="help-pane" id="hpane-roster">
+      <div class="help-section">
+        <div class="help-sec-title">⚠️ ระบบแจ้งเตือน</div>
+        <div class="help-body">ผู้เล่นที่ทำค่า stat หลักของคลาส ต่ำกว่า median ของคลาสตัวเองติดต่อกัน ≥ 2 แมตช์ จะถูก flag แดง</div>
+      </div>
+      <div class="help-section">
+        <div class="help-sec-title">📉 CV — ความสม่ำเสมอ</div>
+        <div class="help-body"><strong>CV = SD ÷ Mean</strong> ของ DMG Player ยิ่งต่ำยิ่งสม่ำเสมอ</div>
+      </div>
+    </div>
+    <div class="help-pane" id="hpane-opp">
+      <div class="help-section">
+        <div class="help-sec-title" style="color:var(--opp)">🚨 Threat Watch List</div>
+        <div class="help-body">ผู้เล่นศัตรูที่ค่า DMG Player หรือ Kill เกิน median ของทีมเราในคลาสเดียวกัน — card สีแดง ⚠️ = เกิน 1.5× median</div>
+      </div>
+    </div>
+    <div class="help-pane" id="hpane-glossary">
+      <div class="help-section">
+        <div class="help-sec-title">📚 คำศัพท์</div>
+        <div class="help-table-wrap">
+          <table class="help-tbl">
+            <tr><th>คำ</th><th>ความหมาย</th></tr>
+            <tr><td><code>KDA</code></td><td>(Kill + Assist) ÷ Death</td></tr>
+            <tr><td><code>CV</code></td><td>Coefficient of Variation = σ ÷ μ</td></tr>
+            <tr><td><code>Clutch Rate</code></td><td>Kill ÷ (Kill + Death)</td></tr>
+            <tr><td><code>Median</code></td><td>ค่ากลาง — ไม่ถูก outlier ดึง</td></tr>
+            <tr><td><code>Threat</code></td><td>ผู้เล่นศัตรูที่ค่า stat เกิน median ทีมเรา</td></tr>
+            <tr><td><code>W/L</code></td><td>Win / Loss — ผลแมตช์ที่กำหนดเองใน dropdown</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- Confirm clear -->
+<div class="overlay" id="confirmModal">
+  <div class="confirm-modal">
+    <div style="font-size:30px;margin-bottom:10px">🗑️</div>
+    <div style="font-size:15px;font-weight:800;margin-bottom:6px">ล้างข้อมูลทั้งหมด?</div>
+    <div style="font-size:12px;color:var(--tx3);margin-bottom:20px;line-height:1.6">ไฟล์แมตช์ทั้งหมดจะถูกลบ<br>และ dashboard จะรีเซ็ต</div>
+    <div style="display:flex;gap:8px;justify-content:center">
+      <button class="btn" id="cancelClear">Cancel</button>
+      <button class="btn btn-danger" id="doClear">ยืนยัน ล้างทั้งหมด</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const CLS_COLOR={Numina:'#c084fc',Celestune:'#38bdf8',Ironclad:'#fb923c',Nightwalker:'#7dd3fc',Sylph:'#f472b6',Bloodstorm:'#f87171',Longyin:'#34d399',Unknown:'#64748b'};
+const CLS_ICON={Numina:'🏮',Celestune:'🪕',Ironclad:'👊',Nightwalker:'🗡️',Sylph:'🪭',Bloodstorm:'🔱',Longyin:'🗲'};
+const HCOL={Kill:'#f87171',Assist:'#a78bfa',DmgPlayer:'#fbbf24',DmgTower:'#38bdf8',Heal:'#34d399',DamageTaken:'#22d3ee',Death:'#94a3b8',Revive:'#c084fc',Resource:'#818cf8'};
+const CHART_OPTS={responsive:true,maintainAspectRatio:false};
+const TT={backgroundColor:'#0f172a',borderColor:'#334155',borderWidth:1,titleColor:'#f8fafc',bodyColor:'#cbd5e1',titleFont:{family:'DM Mono',size:11},bodyFont:{family:'DM Mono',size:11},padding:10,cornerRadius:6,displayColors:false};
+Chart.defaults.font.family="'DM Sans','Noto Sans Thai',sans-serif";
+Chart.defaults.color='#94a3b8';
+
+let allMatchData={};
+let allOppMatchData={};
+let matchWL={};
+let selMatch=null,selPlayer=null,selOppPlayer=null,selOppMatch=null;
+let oppData=[];
+let histInst=null,cmpChInst=null,radarInst=null,barInst=null,cmpRadarInst=null,oppTrendDetailInst=null,oppBarInst=null;
+let pendingFiles=[],oppPendingFiles=[];
+let oppTrendGroup='team';
+
+const sel=id=>document.getElementById(id);
+const escH=s=>String(s).replace(/[&<>'"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[m]));
+const fmt=v=>{v=+v;if(v>=1e6)return(v/1e6).toFixed(1)+'M';if(v>=1e3)return Math.round(v/1e3)+'K';return String(Math.round(v))};
+const fmtSz=b=>b<1024?b+'B':b<1048576?(b/1024).toFixed(1)+'KB':(b/1048576).toFixed(1)+'MB';
+
+function parseRow(r){
+  const n=v=>+(String(v||'0').replace(/,/g,''))||0;
+  return{IGN:(r.IGN||r.Name||r.Player||r.PlayerName||'').trim(),Class:(r.Class||r.Role||'Unknown').trim(),Kill:n(r.Kill||r.Kills),Assist:n(r.Assist||r.Assists),Resource:n(r.Resource||r.Resources||0),DmgPlayer:n(r['Dmg Player']||r.DmgPlayer||r.Damage||0),DmgTower:n(r['Dmg Tower']||r.DmgTower||r['Tower Damage']||0),Heal:n(r.Heal||r.Healing||0),DamageTaken:n(r.DamageTaken||r['Damage Taken']||r.DmgTaken||0),Death:n(r.Death||r.Deaths||0),Revive:n(r.Revive||r.Revives||0)};
+}
+
+function toast(msg,cls=''){
+  const t=sel('toast');t.textContent=msg;t.className=`toast show ${cls}`;
+  clearTimeout(t._t);t._t=setTimeout(()=>t.className='toast',2800);
+}
+function tcls(t){return 't-'+t.toLowerCase()}
+
+function computeRating(data,ign){
+  const keys=['Kill','Assist','DmgPlayer','DmgTower','Heal','DamageTaken','Death','Revive','Resource'];
+  const vals={};keys.forEach(k=>vals[k]=[]);
+  let cls='Unknown';
+  for(const rows of Object.values(data)){if(!Array.isArray(rows))continue;const r=rows.find(x=>x.IGN===ign);if(r){cls=r.Class;keys.forEach(k=>vals[k].push(r[k]||0))}}
+  if(!vals.Kill.length)return{score:0,tier:'D',cls};
+  const avg=arr=>arr.reduce((a,b)=>a+b,0)/arr.length||0;
+  const cm={};keys.forEach(k=>cm[k]=1);
+  for(const rows of Object.values(data)){if(!Array.isArray(rows))continue;for(const r of rows){if(r.Class===cls)keys.forEach(k=>cm[k]=Math.max(cm[k],r[k]||0))}}
+  let score=0;
+  if(['Numina','Celestune','Nightwalker'].includes(cls)){
+    const w1={Kill:.25,Assist:.10,DmgPlayer:.35,DmgTower:.10,Resource:.05,DamageTaken:.05,Death:.10};
+    const w2={Kill:.05,Assist:.05,DmgPlayer:.15,DmgTower:.45,Resource:.15,DamageTaken:.05,Death:.10};
+    let s1=0,s2=0;
+    for(const[k,w]of Object.entries(w1)){const nv=avg(vals[k])/cm[k];s1+=k==='Death'?w*(1-nv)*100:w*nv*100}
+    for(const[k,w]of Object.entries(w2)){const nv=avg(vals[k])/cm[k];s2+=k==='Death'?w*(1-nv)*100:w*nv*100}
+    score=Math.max(s1,s2);
+  }else if(cls==='Sylph'){const w={Assist:.25,Heal:.40,Revive:.20,DamageTaken:.05,Death:.10};for(const[k,wv]of Object.entries(w)){const nv=avg(vals[k])/cm[k];score+=k==='Death'?wv*(1-nv)*100:wv*nv*100}}
+  else if(cls==='Ironclad'){const w={Kill:.05,Assist:.20,DmgPlayer:.10,DmgTower:.10,DamageTaken:.40,Death:.15};for(const[k,wv]of Object.entries(w)){const nv=avg(vals[k])/cm[k];score+=k==='Death'?wv*(1-nv)*100:wv*nv*100}}
+  else if(cls==='Bloodstorm'){const w={Kill:.15,Assist:.15,DmgPlayer:.25,DmgTower:.10,Heal:.10,DamageTaken:.10,Death:.15};for(const[k,wv]of Object.entries(w)){const nv=avg(vals[k])/cm[k];score+=k==='Death'?wv*(1-nv)*100:wv*nv*100}}
+  else if(cls==='Longyin'){const w={Kill:.20,Assist:.10,DmgPlayer:.30,DmgTower:.15,DamageTaken:.10,Resource:.05,Death:.10};for(const[k,wv]of Object.entries(w)){const nv=avg(vals[k])/cm[k];score+=k==='Death'?wv*(1-nv)*100:wv*nv*100}}
+  else{const w={Kill:.20,Assist:.10,DmgPlayer:.30,DmgTower:.15,Resource:.10,DamageTaken:.05,Death:.10};for(const[k,wv]of Object.entries(w)){const nv=avg(vals[k])/cm[k];score+=k==='Death'?wv*(1-nv)*100:wv*nv*100}}
+  score=Math.max(0,Math.min(100,Math.round(score)));
+  const tier=score>=70?'S':score>=65?'A':score>=50?'B':score>=35?'C':'D';
+  return{score,tier,cls};
+}
+
+function computeKDA(data,ign){
+  let k=0,d=0,a=0,cnt=0;
+  for(const rows of Object.values(data)){if(!Array.isArray(rows))continue;const r=rows.find(x=>x.IGN===ign);if(r){k+=r.Kill||0;d+=r.Death||0;a+=r.Assist||0;cnt++;}}
+  if(!cnt)return'—';
+  const avgD=d/cnt;return avgD>0?((k+a)/cnt/avgD).toFixed(1)+'':((k+a)/cnt).toFixed(1);
+}
+
+function computeSidebar(data,cf='ALL'){
+  const tot={},cnt={},clss={};
+  for(const rows of Object.values(data)){if(!Array.isArray(rows))continue;for(const r of rows){if(cf!=='ALL'&&r.Class!==cf)continue;tot[r.IGN]=(tot[r.IGN]||0)+r.DmgPlayer;cnt[r.IGN]=(cnt[r.IGN]||0)+1;clss[r.IGN]=r.Class;}}
+  return Object.entries(tot).sort((a,b)=>b[1]-a[1]).map(([name,total],i)=>({rank:i+1,name,cls:clss[name]||'Unknown',score:fmt(total),matchCount:cnt[name]||0}));
+}
+
+function computePerf(data,ign){
+  const keys=['Kill','Assist','Resource','DmgPlayer','DmgTower','Heal','DamageTaken','Death','Revive'];
+  const s={};keys.forEach(k=>s[k]=[]);
+  for(const rows of Object.values(data)){if(!Array.isArray(rows))continue;const r=rows.find(x=>x.IGN===ign);if(r)keys.forEach(k=>s[k].push(r[k]||0))}
+  const avg=k=>s[k].length?Math.round(s[k].reduce((a,b)=>a+b,0)/s[k].length):0;
+  const best=k=>s[k].length?Math.max(...s[k]):0;
+  const worst=k=>s[k].length?Math.min(...s[k]):0;
+  const maxMN=k=>{let bv=-Infinity,bm='—';for(const[mn,rows]of Object.entries(data)){if(!Array.isArray(rows))continue;const r=rows.find(x=>x.IGN===ign);if(r&&r[k]>bv){bv=r[k];bm=mn}}return bm.length>9?bm.slice(0,8)+'…':bm};
+  const minMN=k=>{let wv=Infinity,wm='—';for(const[mn,rows]of Object.entries(data)){if(!Array.isArray(rows))continue;const r=rows.find(x=>x.IGN===ign);if(r&&r[k]<wv){wv=r[k];wm=mn}}return wm.length>9?wm.slice(0,8)+'…':wm};
+  const latest=(k,mn)=>{if(!mn||!data[mn])return 0;const r=data[mn].find(x=>x.IGN===ign);return r?r[k]:0};
+  return{s,avg,best,worst,maxMN,minMN,latest,count:s.Kill.length};
+}
+
+function globalRank(data,ign,stat){
+  const bests={};
+  for(const rows of Object.values(data)){if(!Array.isArray(rows))continue;for(const r of rows){bests[r.IGN]=bests[r.IGN]||{};bests[r.IGN][stat]=Math.max(bests[r.IGN][stat]||0,r[stat]||0)}}
+  const idx=Object.entries(bests).sort((a,b)=>b[1][stat]-a[1][stat]).findIndex(x=>x[0]===ign);
+  return idx>=0?'#'+(idx+1):'—';
+}
+
+function computeCV(data,ign){
+  const vals=[];
+  for(const rows of Object.values(data)){if(!Array.isArray(rows))continue;const r=rows.find(x=>x.IGN===ign);if(r)vals.push(r.DmgPlayer||0)}
+  if(vals.length<2)return null;
+  const mean=vals.reduce((a,b)=>a+b,0)/vals.length;
+  if(!mean)return null;
+  const sd=Math.sqrt(vals.reduce((a,b)=>a+(b-mean)**2,0)/vals.length);
+  return sd/mean;
+}
+
+function computeTrend(data,ign){
+  const vals=[];
+  for(const rows of Object.values(data)){if(!Array.isArray(rows))continue;const r=rows.find(x=>x.IGN===ign);if(r)vals.push(r.DmgPlayer||0)}
+  if(vals.length<2)return'flat';
+  const last=vals.slice(-3);const pct=(last[last.length-1]-last[0])/(last[0]||1)*100;
+  return pct>10?'up':pct<-10?'down':'flat';
+}
+
+function computeClutch(data,ign){
+  const vals=[];
+  for(const rows of Object.values(data)){if(!Array.isArray(rows))continue;const r=rows.find(x=>x.IGN===ign);if(r){const kd=(r.Kill||0)+(r.Death||0);if(kd>0)vals.push((r.Kill||0)/kd)}}
+  return vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:null;
+}
+
+function classMedian(data,cls,stat,mk){
+  const rows=mk&&data[mk]?data[mk]:Object.values(data).filter(Array.isArray).flat();
+  const v=rows.filter(r=>r.Class===cls).map(r=>r[stat]||0).sort((a,b)=>a-b);
+  if(!v.length)return 0;const m=Math.floor(v.length/2);return v.length%2===0?(v[m-1]+v[m])/2:v[m];
+}
+
+function belowMedianStreak(data,ign,cls){
+  const stat=['Sylph'].includes(cls)?'Heal':['Ironclad'].includes(cls)?'DamageTaken':['Longyin'].includes(cls)?'DmgPlayer':'DmgPlayer';
+  const mns=Object.keys(data).filter(k=>Array.isArray(data[k]));
+  let streak=0;
+  for(let i=mns.length-1;i>=0;i--){const r=data[mns[i]].find(x=>x.IGN===ign);if(!r)continue;const med=classMedian(data,cls,stat,mns[i]);if(med>0&&(r[stat]||0)<med)streak++;else break;}
+  return streak;
+}
+
+function getAllPlayers(){
+  const s=new Set();
+  for(const rows of Object.values(allMatchData)){if(Array.isArray(rows))rows.forEach(r=>s.add(r.IGN))}
+  return[...s];
+}
+
+function getPlayerClass(ign){
+  for(const rows of Object.values(allMatchData)){if(!Array.isArray(rows))continue;const r=rows.find(x=>x.IGN===ign);if(r)return r.Class}
+  return'Unknown';
+}
+
+function getMatchCount(ign){
+  let c=0;
+  for(const rows of Object.values(allMatchData)){if(Array.isArray(rows)&&rows.find(x=>x.IGN===ign))c++}
+  return c;
+}
+
+function totalMatches(){return Object.keys(allMatchData).filter(k=>Array.isArray(allMatchData[k])).length}
+
+function renderSidebar(){
+  const cf=sel('classFilter').value;
+  const pl=computeSidebar(allMatchData,cf);
+  const el=sel('playerList');el.innerHTML='';
+  const cntEl=sel('totalCnt');if(cntEl)cntEl.textContent=pl.length;
+  const total=totalMatches();
+  pl.forEach(p=>{
+    const rt=computeRating(allMatchData,p.name);
+    const trend=computeTrend(allMatchData,p.name);
+    const streak=belowMedianStreak(allMatchData,p.name,p.cls);
+    const kda=computeKDA(allMatchData,p.name);
+    const rc=p.rank===1?'r1':p.rank===2?'r2':p.rank===3?'r3':'';
+    const ti=trend==='up'?'↑':trend==='down'?'↓':'→';
+    const tc=trend==='up'?'t-up':trend==='down'?'t-dn':'t-fl';
+    const mc=p.matchCount;const mcPct=total>0?mc/total:0;
+    const mcColor=mcPct>=1?'var(--green)':mcPct>=0.5?'var(--gold)':'var(--red)';
+    const d=document.createElement('div');
+    d.className=`player-row${selPlayer===p.name?' active':''}`;
+    d.title=p.name;
+    d.innerHTML=`<div class="p-rank ${rc}">${p.rank}</div><div class="p-info"><div class="p-name-row"><span class="p-name-text">${escH(p.name)}</span><span class="trend ${tc}">${ti}</span>${streak>=2?'<span class="adot" title="ต่ำกว่ามาตรฐาน '+streak+' แมตช์"></span>':''}</div><div class="p-meta"><span class="p-cls-lbl" style="color:${CLS_COLOR[p.cls]||'#94a3b8'}">${CLS_ICON[p.cls]||''} ${p.cls}</span><span class="tier ${tcls(rt.tier)}">${rt.tier}</span></div></div><div class="p-score-col"><span class="p-score">${p.score}</span><span class="p-kda" style="color:var(--tx3)">KDA ${kda}</span><span class="p-matches" style="color:${mcColor}">${mc}/${total}</span></div>`;
+    d.onclick=()=>{selPlayer=p.name;renderSidebar();renderPlayerHeader();renderPerfTable();renderCharts()};
+    el.appendChild(d);
+  });
+}
+
+function renderPlayerHeader(){
+  const hasPlayer=!!selPlayer;
+  sel('noPlayerState').style.display=hasPlayer?'none':'block';
+  sel('playerContent').style.display=hasPlayer?'flex':'none';
+  if(!hasPlayer)return;
+  const cls=getPlayerClass(selPlayer);
+  sel('avEl').textContent=CLS_ICON[cls]||'⚔️';
+  sel('avEl').style.background=(CLS_COLOR[cls]||'#6366f1')+'22';
+  sel('phName').textContent=selPlayer;
+  sel('phCls').textContent=cls;
+  const sb=computeSidebar(allMatchData);const idx=sb.findIndex(p=>p.name===selPlayer);
+  sel('phRank').textContent=idx>=0?`อันดับ #${idx+1}`:'Rank —';
+  const rt=computeRating(allMatchData,selPlayer);
+  const rEl=sel('phRating');rEl.style.display='inline-block';rEl.textContent=`${rt.tier} ${rt.score}`;rEl.className=`badge ${tcls(rt.tier)}`;
+  const mc=getMatchCount(selPlayer);const tot=totalMatches();
+  sel('phMatchCnt').textContent=`${mc}/${tot} แมตช์`;
+}
+
+function renderMatchDropdown(){
+  const mfl=sel('matchFileList'),hdr=sel('matchDdHdr');
+  const names=Object.keys(allMatchData).filter(k=>Array.isArray(allMatchData[k]));
+  hdr.textContent=`${names.length} ไฟล์โหลดแล้ว`;mfl.innerHTML='';
+  if(!names.length){mfl.innerHTML='<div style="padding:14px;text-align:center;font-size:12px;color:var(--tx3)">ยังไม่มีไฟล์</div>';return}
+  names.forEach(name=>{
+    const rows=allMatchData[name];const wl=matchWL[name]||null;
+    const item=document.createElement('div');item.className=`match-fi${name===selMatch?' active':''}`;
+    item.innerHTML=`<span style="font-size:14px">📄</span><div style="flex:1;min-width:0"><div class="match-fi-name">${escH(name)}</div><div class="match-fi-meta">${rows.length} ผู้เล่น <button class="wl-badge ${wl==='W'?'wl-w':wl==='L'?'wl-l':'wl-none'}" data-mn="${escH(name)}">${wl||'?'}</button></div></div>${name===selMatch?'<span class="match-fi-check">✓</span>':''}`;
+    item.querySelector('.wl-badge').onclick=e=>{e.stopPropagation();const mn=e.target.dataset.mn;const cur=matchWL[mn]||null;matchWL[mn]=cur===null?'W':cur==='W'?'L':null;renderMatchDropdown();renderAll()};
+    item.onclick=e=>{if(e.target.classList.contains('wl-badge'))return;e.stopPropagation();selMatch=name;sel('matchBtnTxt').textContent=name.length>16?name.slice(0,15)+'…':name;closeDropdown('match');renderAll();toast(name)};
+    mfl.appendChild(item);
+  });
+}
+
+function closeDropdown(which){
+  if(which==='match'||which==='all'){sel('matchDropdown').classList.remove('open');sel('matchBtn').classList.remove('open');sel('matchArrow').classList.remove('up')}
+  if(which==='opp'||which==='all'){sel('oppMatchDropdown').classList.remove('open');sel('oppMatchBtn').classList.remove('open');sel('oppMatchArrow').classList.remove('up')}
+}
+
+function renderPerfTable(){
+  const pt=sel('perfTable');if(!pt)return;
+  if(!selPlayer){pt.innerHTML='';sel('perfMatchCnt').textContent='เลือกผู้เล่น';return}
+  const pf=computePerf(allMatchData,selPlayer);
+  sel('perfMatchCnt').textContent=`จาก ${pf.count} แมตช์`;
+  const defs=[{icon:'⚔️',label:'Kill',key:'Kill'},{icon:'🤝',label:'Assist',key:'Assist'},{icon:'💠',label:'Resource',key:'Resource'},{icon:'💥',label:'DMG Player',key:'DmgPlayer'},{icon:'🏰',label:'DMG Tower',key:'DmgTower'},{icon:'💚',label:'Heal',key:'Heal'},{icon:'🛡️',label:'DMG Taken',key:'DamageTaken'},{icon:'💀',label:'Death',key:'Death'},{icon:'✨',label:'Revive',key:'Revive'}];
+  const avgKill=pf.avg('Kill'),avgDeath=pf.avg('Death');
+  const kdRatio=avgDeath>0?(avgKill/avgDeath).toFixed(2):'∞';
+  pt.innerHTML=defs.map((s,i)=>{
+    const l=pf.latest(s.key,selMatch),a=pf.avg(s.key);const mx=pf.best(s.key);const pct=mx>0?Math.round(l/mx*100):0;
+    const pcol=pct>=90?'var(--green)':pct>=60?'var(--gold)':'var(--red)';
+    const rk=globalRank(allMatchData,selPlayer,s.key);const kd=(s.key==='Kill'||s.key==='Death')?kdRatio:'—';
+    return`<div class="perf-row" style="animation:fadeUp .28s ease ${i*.03}s both"><div class="perf-stat"><span style="font-size:14px">${s.icon}</span><span>${s.label}</span></div><div style="text-align:center;font-family:var(--mono);font-size:13px;font-weight:700;color:var(--accent)">${fmt(l)}</div><div style="text-align:center;font-family:var(--mono);font-size:11px;color:var(--tx3)">${fmt(a)}</div><div style="text-align:center;font-family:var(--mono);font-size:11px;color:var(--green);line-height:1.4"><div style="font-weight:700">${fmt(mx)}</div><div style="font-size:9px;color:var(--tx3);font-family:var(--font)">${escH(pf.maxMN(s.key))}</div></div><div style="text-align:center;font-family:var(--mono);font-size:11px;color:var(--red);line-height:1.4"><div style="font-weight:700">${fmt(pf.worst(s.key))}</div><div style="font-size:9px;color:var(--tx3);font-family:var(--font)">${escH(pf.minMN(s.key))}</div></div><div style="text-align:center;font-family:var(--mono);font-size:13px;font-weight:700;color:${pcol}">${pct}%</div><div style="text-align:center;font-family:var(--mono);font-size:11px;font-weight:600;color:var(--tx3)">${kd}</div><div style="text-align:center"><span class="rank-pill">${rk}</span></div></div>`;
+  }).join('');
+}
+
+function renderCharts(){
+  if(histInst){histInst.destroy();histInst=null}
+  if(!selPlayer)return;
+  const rows=selMatch&&allMatchData[selMatch]?allMatchData[selMatch]:[];
+  const pr=rows.find(r=>r.IGN===selPlayer);
+  const g=k=>pr?pr[k]:0,bst=k=>rows.length?Math.max(...rows.map(r=>r[k]||0)):0;
+  const combDefs=[{key:'Kill',label:'Kill',color:'#f87171',lower:false},{key:'Assist',label:'Assist',color:'#a78bfa',lower:false},{key:'DmgPlayer',label:'DMG Player',color:'#fbbf24',lower:false},{key:'DmgTower',label:'DMG Tower',color:'#38bdf8',lower:false},{key:'Death',label:'Death',color:'#94a3b8',lower:true}];
+  const suppDefs=[{key:'DamageTaken',label:'DMG Taken',color:'#fbbf24',lower:false},{key:'Heal',label:'Heal',color:'#34d399',lower:false},{key:'Revive',label:'Revive',color:'#38bdf8',lower:false},{key:'Assist',label:'Assist',color:'#a78bfa',lower:false}];
+  const histAvg={};
+  [...combDefs,...suppDefs].forEach(cd=>{const vals=Object.values(allMatchData).filter(Array.isArray).map(mR=>{const p=mR.find(r=>r.IGN===selPlayer);return p?p[cd.key]:null}).filter(v=>v!==null);histAvg[cd.key]=vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:0});
+
+  function mkScCards(elId,defs,getV,getA,getBst){
+    const el=sel(elId);if(!el)return;
+    el.innerHTML=defs.map((cd,i)=>{
+      const val=getV(cd.key),avg=getA(cd.key),bval=getBst(cd.key);
+      const diff=cd.lower?(avg-val):(val-avg);const better=diff>=0;
+      const pct=bval>0?Math.min(Math.round(val/bval*100),100):0;
+      const isMega=['DmgPlayer','DmgTower','Heal','DamageTaken'].includes(cd.key);
+      const dv=isMega?fmt(val):val;const dd=isMega?fmt(Math.abs(diff)):Math.round(Math.abs(diff));
+      const isTop=val>=bval&&val>0;
+      return`<div class="sc${cd.isOpp?' opp':''}" style="${isTop?'border-color:'+(cd.isOpp?'var(--opp)':cd.color)+'66;':''}animation:fadeUp .3s ease ${i*.05}s both"><div class="sc-lbl">${cd.label}</div><div class="sc-val" style="color:${cd.color};font-size:${isMega?'16':'21'}px">${dv}</div><div class="sc-diff" style="color:${better?'var(--green)':'var(--red)'}">${better?'↑':'↓'} ${dd}</div><div class="sc-bar"><div class="sc-fill" style="width:${pct}%;background:${cd.isOpp?'var(--opp)':cd.color}"></div></div></div>`;
+    }).join('');
+  }
+  mkScCards('combatCards',combDefs,g,k=>histAvg[k]||0,bst);
+  mkScCards('supportCards',suppDefs,g,k=>histAvg[k]||0,bst);
+
+  let targetOpp=oppData.find(r=>r.IGN===selOppPlayer);
+  if(!targetOpp){targetOpp=[...oppData].sort((a,b)=>(b.DmgPlayer||0)-(a.DmgPlayer||0))[0];if(targetOpp&&!selOppPlayer){selOppPlayer=targetOpp.IGN;setTimeout(()=>{renderOppSidebar();renderOppPlayerHeader()},0)}}
+  const oppIGN=targetOpp?targetOpp.IGN:null;
+  const oppHistAvg={};
+  [...combDefs,...suppDefs].forEach(cd=>{if(!oppIGN){oppHistAvg[cd.key]=0;return}const vals=Object.values(allOppMatchData).filter(Array.isArray).map(mR=>{const p=mR.find(r=>r.IGN===oppIGN);return p?p[cd.key]:null}).filter(v=>v!==null);oppHistAvg[cd.key]=vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:0});
+  if(!oppData.length){
+    sel('oppCombatCards').innerHTML='<div style="grid-column:1/-1;text-align:center;padding:16px;color:var(--tx3);font-size:12px;">อัปโหลด CSV ฝ่ายตรงข้ามเพื่อดูข้อมูล</div>';
+    sel('oppSupportCards').innerHTML='<div style="grid-column:1/-1;text-align:center;padding:16px;color:var(--tx3);font-size:12px;">อัปโหลด CSV ฝ่ายตรงข้ามเพื่อดูข้อมูล</div>';
+  }else{
+    mkScCards('oppCombatCards',combDefs.map(d=>({...d,isOpp:true})),k=>targetOpp?targetOpp[k]||0:0,k=>oppHistAvg[k]||0,k=>oppData.length?Math.max(...oppData.map(r=>r[k]||0)):0);
+    mkScCards('oppSupportCards',suppDefs.map(d=>({...d,isOpp:true})),k=>targetOpp?targetOpp[k]||0:0,k=>oppHistAvg[k]||0,k=>oppData.length?Math.max(...oppData.map(r=>r[k]||0)):0);
+  }
+
+  function buildHistory(sk){
+    if(histInst){histInst.destroy();histInst=null}
+    const col=HCOL[sk]||'#818cf8',labels=[],vals=[],mns=[];
+    for(const mName of Object.keys(allMatchData)){const mR=allMatchData[mName];if(!Array.isArray(mR))continue;const p=mR.find(r=>r.IGN===selPlayer);if(!p)continue;labels.push(mName.length>13?mName.slice(0,12)+'…':mName);vals.push(p[sk]||0);mns.push(mName)}
+    histInst=new Chart(sel('histChart'),{type:'line',data:{labels,datasets:[{label:sk,data:vals,borderColor:col,backgroundColor:col+'18',borderWidth:2,pointBackgroundColor:mns.map(m=>m===selMatch?'#fbbf24':col),pointBorderColor:mns.map(m=>m===selMatch?'#fbbf24':col),pointBorderWidth:2,pointRadius:mns.map(m=>m===selMatch?8:4),tension:.35,fill:true}]},options:{...CHART_OPTS,plugins:{legend:{display:false},tooltip:{...TT,callbacks:{title:c=>mns[c[0].dataIndex],label:c=>' '+sk+': '+fmt(c.raw)}}},scales:{x:{grid:{color:'var(--border)'},ticks:{color:'var(--tx3)',font:{size:10},maxRotation:25},border:{display:false}},y:{grid:{color:'var(--border)'},ticks:{color:'var(--tx3)',font:{family:'DM Mono',size:10},callback:v=>fmt(v)},border:{display:false}}}}});
+  }
+  const hs=sel('histStatSel');
+  buildHistory(hs?hs.value:'DmgPlayer');
+  if(hs&&!hs._s){hs.onchange=()=>buildHistory(hs.value);hs._s=true}
+}
+
+function renderMatchAnalytics(){
+  const mn=selMatch;if(!mn||!allMatchData[mn])return;
+  const rows=allMatchData[mn];
+  const sumEl=sel('matchSumCards'),lbl=sel('matchSumLbl');
+  if(lbl)lbl.textContent=mn;
+  const sDefs=[{label:'Kill',color:'#f87171',key:'Kill'},{label:'Assist',color:'#a78bfa',key:'Assist'},{label:'DMG Player',color:'#fbbf24',key:'DmgPlayer'},{label:'DMG Tower',color:'#38bdf8',key:'DmgTower'},{label:'Heal',color:'#34d399',key:'Heal'}];
+  const sumC=k=>rows.reduce((a,r)=>a+(r[k]||0),0);
+  if(sumEl)sumEl.innerHTML=sDefs.map((d,i)=>`<div class="sc" style="animation:fadeUp .28s ease ${i*.05}s both"><div class="sc-lbl" style="color:${d.color}">${d.label}</div><div class="sc-val" style="color:${d.color};font-size:16px">${fmt(sumC(d.key))}</div><div class="sc-avg">${rows.length} players</div><div class="sc-bar"><div class="sc-fill" style="width:100%;background:${d.color}"></div></div></div>`).join('');
+  const oe=sel('oppSumCards'),oppLbl=sel('oppMatchSumLbl');
+  if(oppLbl)oppLbl.textContent=selOppMatch||'';
+  if(oe){
+    if(oppData.length){const os=k=>oppData.reduce((a,r)=>a+(r[k]||0),0);oe.innerHTML=sDefs.map((d,i)=>`<div class="sc opp" style="animation:fadeUp .28s ease ${i*.05}s both"><div class="sc-lbl" style="color:${d.color}">${d.label}</div><div class="sc-val" style="color:${d.color};font-size:16px">${fmt(os(d.key))}</div><div class="sc-avg">${oppData.length} players</div><div class="sc-bar"><div class="sc-fill" style="width:100%;background:var(--opp)"></div></div></div>`).join('')}
+    else oe.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:16px;color:var(--tx3);font-size:12px;">อัปโหลด CSV ฝ่ายตรงข้ามด้านบนเพื่อดูสรุป</div>';
+  }
+  renderTop10('our');renderTop10('opp');renderCmpChart();
+}
+
+function renderTop10(side){
+  const isOur=side==='our';
+  const elId=isOur?'ourTop10':'oppTop10';const selId=isOur?'ourTop10Stat':'oppTop10Stat';
+  const el=sel(elId);if(!el)return;
+  const sk=sel(selId)?sel(selId).value:'DmgPlayer';
+  const dataRows=isOur?(selMatch&&allMatchData[selMatch]?allMatchData[selMatch]:[]):oppData;
+  if(!dataRows.length){el.innerHTML=`<div style="text-align:center;padding:14px;color:var(--tx3);font-size:12px">${isOur?'เลือกแมตช์':'อัปโหลด CSV ฝ่ายตรงข้าม'}</div>`;return}
+  const sorted=[...dataRows].sort((a,b)=>(b[sk]||0)-(a[sk]||0)).slice(0,10);
+  const numC=['#fbbf24','#94a3b8','#b45309'];
+  el.innerHTML=sorted.map((p,i)=>`<div class="top10-row js-player-link" data-ign="${escH(p.IGN)}" style="cursor:pointer;${p.IGN===selPlayer&&isOur?'background:var(--accent-ll);':''}"><span class="top10-n" style="color:${i<3?numC[i]:'var(--tx4)'}">${i+1}</span><span style="font-size:11px;color:${CLS_COLOR[p.Class]||'#94a3b8'}">${CLS_ICON[p.Class]||''}</span><span style="font-size:11px;font-weight:${p.IGN===selPlayer&&isOur?'700':'400'};color:${p.IGN===selPlayer&&isOur?'var(--accent-text)':'var(--tx1)'};flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escH(p.IGN)}</span><span class="top10-v" style="color:${isOur?'var(--tx1)':'var(--opp)'}">${fmt(p[sk]||0)}</span></div>`).join('');
+  const ss=sel(selId);
+  if(ss&&!ss._t){ss.onchange=e=>{const v=e.target.value;['ourTop10Stat','oppTop10Stat'].forEach(id=>{const s=sel(id);if(s)s.value=v});renderTop10('our');renderTop10('opp')};ss._t=true}
+}
+
+function renderCmpChart(){
+  if(cmpChInst){cmpChInst.destroy();cmpChInst=null}
+  const cc=sel('cmpChart');if(!cc)return;
+  const ourKey=sel('cmpMatchSel')?.value;
+  const STATS=[{key:'Kill',label:'Kill',icon:'⚔️'},{key:'Assist',label:'Assist',icon:'🤝'},{key:'DmgPlayer',label:'DMG Player',icon:'💥'},{key:'DmgTower',label:'DMG Tower',icon:'🏰'},{key:'Heal',label:'Heal',icon:'💚'},{key:'DamageTaken',label:'DMG Taken',icon:'🛡️'},{key:'Death',label:'Death',icon:'💀'},{key:'Revive',label:'Revive',icon:'✨'},{key:'Resource',label:'Resource',icon:'🔋'}];
+  const isMega=k=>['DmgPlayer','DmgTower','Heal','DamageTaken'].includes(k);
+  const ourRows=ourKey&&allMatchData[ourKey]?allMatchData[ourKey]:[];const oppRows=oppData||[];
+  const ourT=STATS.map(s=>ourRows.reduce((a,r)=>a+(r[s.key]||0),0));const oppT=STATS.map(s=>oppRows.reduce((a,r)=>a+(r[s.key]||0),0));
+  const total=STATS.map((_,i)=>Math.max(ourT[i]+oppT[i],1));
+  const ourPct=STATS.map((_,i)=>Math.round(ourT[i]/total[i]*100));const oppPct=STATS.map((_,i)=>Math.round(oppT[i]/total[i]*100));
+  const pctLabelPlugin={id:'cmpPctLabel',afterDatasetsDraw(chart){const{ctx,scales:{x}}=chart;ctx.save();ctx.font='bold 11px DM Mono';ctx.textBaseline='middle';[0,1].forEach(dsIdx=>{const meta=chart.getDatasetMeta(dsIdx);const pcts=dsIdx===0?oppPct:ourPct;meta.data.forEach((bar,i)=>{const v=pcts[i];if(!v)return;const xPos=x.getPixelForValue(chart.data.datasets[dsIdx].data[i]);const barW=Math.abs(xPos-x.getPixelForValue(0));ctx.fillStyle=barW>34?'rgba(255,255,255,0.92)':(dsIdx===0?'#fca5a5':'#a5b4fc');ctx.textAlign=barW>34?'right':'left';ctx.fillText(v+'%',barW>34?xPos-5:xPos+5,bar.y)})});ctx.restore()}};
+  cmpChInst=new Chart(cc,{type:'bar',plugins:[pctLabelPlugin],data:{labels:STATS.map(s=>s.icon+'  '+s.label),datasets:[{label:'ศัตรู',data:oppPct,backgroundColor:'rgba(248,113,113,0.80)',borderColor:'#ef4444',borderWidth:1.5,borderRadius:{topLeft:0,bottomLeft:0,topRight:5,bottomRight:5},borderSkipped:false},{label:'ทีมเรา',data:ourPct.map(v=>-v),backgroundColor:'rgba(129,140,248,0.80)',borderColor:'#6366f1',borderWidth:1.5,borderRadius:{topLeft:5,bottomLeft:5,topRight:0,bottomRight:0},borderSkipped:false}]},options:{...CHART_OPTS,indexAxis:'y',interaction:{mode:'index',intersect:false},layout:{padding:{right:8,left:8,top:6,bottom:6}},plugins:{legend:{display:true,position:'top',labels:{color:'#cbd5e1',font:{size:12,weight:'700'},usePointStyle:true,padding:20}},tooltip:{...TT,displayColors:true,callbacks:{title:ctx=>STATS[ctx[0].dataIndex].icon+'  '+STATS[ctx[0].dataIndex].label,label:ctx=>{const i=ctx.dataIndex;const s=STATS[i];const isOpp=ctx.datasetIndex===0;const rawVal=isOpp?oppT[i]:ourT[i];const pct=isOpp?oppPct[i]:ourPct[i];const fv=v=>isMega(s.key)?fmt(Math.round(v)):Math.round(v);const gap=ourPct[i]-oppPct[i];return[(isOpp?'  ศัตรู  ':'  ทีมเรา')+': '+fv(rawVal)+' ('+pct+'%)',isOpp?'  Gap: '+(gap>=0?'เราได้เปรียบ +':'ศัตรูได้เปรียบ ')+Math.abs(gap)+'%':null].filter(Boolean)}}}},scales:{x:{min:-100,max:100,stacked:false,grid:{color:ctx=>ctx.tick.value===0?'rgba(255,255,255,0.5)':'rgba(255,255,255,0.07)',lineWidth:ctx=>ctx.tick.value===0?2:1},ticks:{color:'#94a3b8',font:{family:'DM Mono',size:11},callback:v=>Math.abs(v)+'%'},border:{display:false},title:{display:true,text:'← ทีมเรา                    ศัตรู →',color:'#64748b',font:{size:11}}},y:{grid:{display:false},ticks:{color:'#f8fafc',font:{size:14,weight:'700'},padding:8},border:{display:false}}}}});
+}
+
+function populateCmpMatchSel(){
+  const sl=sel('cmpMatchSel');if(!sl)return;
+  const keys=Object.keys(allMatchData).filter(k=>Array.isArray(allMatchData[k]));
+  sl.innerHTML=keys.map(m=>`<option value="${escH(m)}">${m.length>18?m.slice(0,17)+'…':m}</option>`).join('');
+  if(selMatch&&keys.includes(selMatch))sl.value=selMatch;else if(keys.length)sl.value=keys[keys.length-1];
+  if(!sl._s){sl.onchange=renderCmpChart;sl._s=true}
+}
+
+function compClassStats(mk){
+  const rows=mk&&allMatchData[mk]?allMatchData[mk]:Object.values(allMatchData).filter(Array.isArray).flat();
+  return compClassStatsFrom(rows);
+}
+
+function compClassStatsFrom(rows){
+  const cs={};
+  rows.forEach(r=>{if(!cs[r.Class])cs[r.Class]={count:0,Kill:0,Assist:0,DmgPlayer:0,DmgTower:0,Heal:0,DamageTaken:0,Death:0,Revive:0};const c=cs[r.Class];c.count++;['Kill','Assist','DmgPlayer','DmgTower','Heal','DamageTaken','Death','Revive'].forEach(k=>c[k]+=r[k]||0)});
+  for(const c of Object.values(cs))if(c.count>0)['Kill','Assist','DmgPlayer','DmgTower','Heal','DamageTaken','Death','Revive'].forEach(k=>c[k]=Math.round(c[k]/c.count));
+  return cs;
+}
+
+function renderClassAnalysis(){
+  const sl=sel('classMatchSel');
+  if(sl&&!sl._s){sl.innerHTML='<option value="">ทุกแมตช์</option>'+Object.keys(allMatchData).map(k=>`<option value="${escH(k)}">${escH(k)}</option>`).join('');sl.onchange=renderClassAnalysis;sl._s=true}
+  const mk=sl?sl.value:'';const cs=compClassStats(mk||null);
+
+  // populate opp match selector
+  const bom=sel('barOppMatchSel');
+  if(bom&&!bom._s){
+    const oppKeys=Object.keys(allOppMatchData).filter(k=>Array.isArray(allOppMatchData[k]));
+    bom.innerHTML='<option value="">🎯 ฝ่ายตรงข้าม (ทุกแมตช์)</option>'+oppKeys.map(k=>`<option value="${escH(k)}">${k.length>18?k.slice(0,17)+'…':k}</option>`).join('');
+    bom.onchange=renderClassAnalysis;bom._s=true;
+  } else if(bom){
+    const oppKeys=Object.keys(allOppMatchData).filter(k=>Array.isArray(allOppMatchData[k]));
+    const cur=bom.value;
+    bom.innerHTML='<option value="">🎯 ฝ่ายตรงข้าม (ทุกแมตช์)</option>'+oppKeys.map(k=>`<option value="${escH(k)}"${k===cur?' selected':''}>${k.length>18?k.slice(0,17)+'…':k}</option>`).join('');
+  }
+  const oppMk=bom?bom.value:'';
+  const oppCs=compClassStatsFrom(oppMk?allOppMatchData[oppMk]:Object.values(allOppMatchData).filter(Array.isArray).flat());
+
+  const grid=sel('classCards');
+  if(grid)grid.innerHTML=Object.entries(cs).map(([cls,s])=>`<div class="class-card" style="border-top:3px solid ${CLS_COLOR[cls]||'#94a3b8'}"><div class="cc-head"><span style="font-size:17px">${CLS_ICON[cls]||'❓'}</span><span class="cc-name" style="color:${CLS_COLOR[cls]||'var(--tx1)'}">${cls}</span><span class="cc-cnt">${s.count}p</span></div><div class="cc-row"><span class="cc-row-lbl">Avg Kill</span><span class="cc-row-val" style="color:#f87171">${s.Kill}</span></div><div class="cc-row"><span class="cc-row-lbl">Avg Assist</span><span class="cc-row-val" style="color:#a78bfa">${s.Assist}</span></div><div class="cc-row"><span class="cc-row-lbl">Avg DMG</span><span class="cc-row-val" style="color:#fbbf24">${fmt(s.DmgPlayer)}</span></div><div class="cc-row"><span class="cc-row-lbl">Avg Heal</span><span class="cc-row-val" style="color:#34d399">${fmt(s.Heal)}</span></div><div class="cc-row"><span class="cc-row-lbl">Avg Death</span><span class="cc-row-val" style="color:#94a3b8">${s.Death}</span></div></div>`).join('');
+  if(radarInst){radarInst.destroy();radarInst=null}
+  const rc=sel('radarChart');
+  if(rc&&Object.keys(cs).length){const rk=['Kill','Assist','DmgPlayer','Heal','DamageTaken','Revive'];const mx={};rk.forEach(k=>{mx[k]=Math.max(...Object.values(cs).map(s=>s[k]||0),1)});radarInst=new Chart(rc,{type:'radar',data:{labels:rk,datasets:Object.entries(cs).map(([cls,s])=>({label:cls,data:rk.map(k=>(s[k]||0)/mx[k]*100),borderColor:CLS_COLOR[cls],backgroundColor:CLS_COLOR[cls]+'18',borderWidth:2,pointRadius:3,pointBackgroundColor:CLS_COLOR[cls]}))},options:{...CHART_OPTS,plugins:{legend:{labels:{color:'var(--tx3)',font:{size:10},usePointStyle:true},position:'bottom'},tooltip:{...TT}},settings:{r:{grid:{color:'var(--border)'},angleLines:{color:'var(--border)'},ticks:{display:false},pointLabels:{color:'var(--tx3)',font:{size:10}}}}}})}
+  if(barInst){barInst.destroy();barInst=null}
+  const bc=sel('barChart'),bss=sel('barStatSel'),bk=bss?bss.value:'DmgPlayer';
+  if(bc&&Object.keys(cs).length){
+    // merge all class names from both teams
+    const allCls=[...new Set([...Object.keys(cs),...Object.keys(oppCs)])];
+    const ourData=allCls.map(c=>cs[c]?cs[c][bk]||0:0);
+    const oppData2=allCls.map(c=>oppCs[c]?oppCs[c][bk]||0:0);
+    const hasOpp=oppData2.some(v=>v>0);
+    barInst=new Chart(bc,{type:'bar',data:{
+      labels:allCls.map(c=>(CLS_ICON[c]||'')+' '+c),
+      datasets:[
+        {label:'ทีมเรา',data:ourData,backgroundColor:allCls.map(c=>(CLS_COLOR[c]||'#94a3b8')+'bb'),borderColor:allCls.map(c=>CLS_COLOR[c]||'#94a3b8'),borderWidth:2,borderRadius:5},
+        ...(hasOpp?[{label:'ฝ่ายตรงข้าม',data:oppData2,backgroundColor:allCls.map(c=>(CLS_COLOR[c]||'#94a3b8')+'44'),borderColor:allCls.map(c=>CLS_COLOR[c]||'#94a3b8'),borderWidth:2,borderRadius:5,borderDash:[4,3]}]:[])
+      ]
+    },options:{...CHART_OPTS,plugins:{legend:{display:hasOpp,position:'top',labels:{color:'#cbd5e1',font:{size:11,weight:'700'},usePointStyle:true,padding:14}},tooltip:{...TT,callbacks:{label:c=>' '+c.dataset.label+': '+fmt(c.raw)}}},scales:{x:{grid:{display:false},ticks:{color:'var(--tx3)',font:{size:10}},border:{display:false}},y:{grid:{color:'var(--border)'},ticks:{color:'var(--tx3)',font:{family:'DM Mono',size:10},callback:v=>fmt(v)},border:{display:false}}}}});
+    if(bss&&!bss._s){bss.onchange=renderClassAnalysis;bss._s=true}
+  }
+  renderRatingsTable();
+}
+
+function renderRatingsTable(){
+  const el=sel('ratingsTable');if(!el)return;
+  const all=getAllPlayers();
+  const rated=all.map(ign=>{const r=computeRating(allMatchData,ign);return{ign,score:r.score,tier:r.tier,cls:r.cls}}).sort((a,b)=>b.score-a.score);
+  const dps=rated.filter(p=>['Numina','Celestune','Nightwalker','Longyin'].includes(p.cls));
+  const tank=rated.filter(p=>['Ironclad','Bloodstorm'].includes(p.cls));
+  const sup=rated.filter(p=>p.cls==='Sylph');
+  function mkCol(title,list,col){
+    const inner=list.length?list.map((p,i)=>'<div class="rating-row js-player-link" data-ign="'+escH(p.ign)+'"><span style="font-family:var(--mono);font-size:10px;font-weight:700;color:'+(i<3?'#fbbf24':'var(--tx4)')+'">'+( i+1)+'</span><span style="font-size:11px;font-weight:500;display:flex;align-items:center;gap:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><span>'+(CLS_ICON[p.cls]||'')+'</span>'+escH(p.ign)+'</span><span style="font-family:var(--mono);font-size:12px;font-weight:700;text-align:right">'+p.score+'</span><span class="tier '+tcls(p.tier)+'" style="padding:2px 5px;text-align:center">'+p.tier+'</span></div>').join(''):'<div style="padding:12px;text-align:center;color:var(--tx3);font-size:11px">ไม่มีข้อมูล</div>';
+    return`<div class="ratings-col"><div class="ratings-col-head" style="color:${col}">${title}</div><div style="max-height:360px;overflow-y:auto">${inner}</div></div>`;
+  }
+  el.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px">${mkCol('🗲🏮🗡️🪕 DPS',dps,'#f87171')}${mkCol('👊🔱 Tank / Bruiser',tank,'#fbbf24')}${mkCol('🪭 Support',sup,'#34d399')}</div>`;
+}
+
+function renderRosterOverview(){renderAlerts();renderHeatmap();renderCV();renderClutch();renderSuppEff();renderMedianTable()}
+
+function renderAlerts(){
+  const el=sel('alertsList'),cnt=sel('alertCnt');if(!el)return;
+  const alerts=[];
+  getAllPlayers().forEach(ign=>{const cls=getPlayerClass(ign);const streak=belowMedianStreak(allMatchData,ign,cls);if(streak>=2){const stat=cls==='Sylph'?'Heal':cls==='Ironclad'?'DamageTaken':'DmgPlayer';alerts.push({ign,cls,streak,stat})}});
+  if(cnt)cnt.textContent=alerts.length;
+  alerts.sort((a,b)=>b.streak-a.streak);
+  el.innerHTML=alerts.length?alerts.map(a=>`<div class="alert-row${a.streak<3?' warn':''} js-player-link" data-ign="${escH(a.ign)}"><div class="adot2" style="background:${a.streak>=3?'var(--red)':'var(--gold)'}"></div><div><strong>${escH(a.ign)}</strong> <span style="color:${CLS_COLOR[a.cls]||'#94a3b8'}">${CLS_ICON[a.cls]||''} ${a.cls}</span> — ต่ำกว่า median <strong>${a.stat}</strong> ติดต่อกัน <strong>${a.streak} แมตช์</strong></div></div>`).join(''):'<div style="text-align:center;padding:12px;color:var(--green);font-size:12px;font-weight:600">✓ All players meeting class median.</div>';
+}
+
+function renderHeatmap(){
+  const tbl=sel('hmTable');if(!tbl)return;
+  const statSel=sel('hmStatSel'),stat=statSel?statSel.value:'rating';
+  const mks=Object.keys(allMatchData).filter(k=>Array.isArray(allMatchData[k]));
+  if(!mks.length){tbl.innerHTML='<tr><td style="padding:20px;color:var(--tx3)">No match data</td></tr>';return}
+  const playerList=getAllPlayers().map(ign=>{const rt=computeRating(allMatchData,ign);return{ign,score:rt.score,cls:rt.cls}}).sort((a,b)=>b.score-a.score);
+  const shortK=mk=>mk.length>11?mk.slice(0,10)+'…':mk;
+  const mkHdrTh=mk=>{const wl=matchWL[mk];const wlHtml=wl?('<br><span style="font-weight:700;color:'+(wl==='W'?'var(--green)':'var(--red)')+'">'+wl+'</span>'):'';return'<th title="'+escH(mk)+'">'+escH(shortK(mk))+wlHtml+'</th>'};
+  let html=`<thead><tr><th style="text-align:left">Player</th>${mks.map(mkHdrTh).join('')}<th>Trend</th><th>CV</th></tr></thead><tbody>`;
+  playerList.forEach(p=>{
+    const trend=computeTrend(allMatchData,p.ign),cv=computeCV(allMatchData,p.ign);
+    const ti=trend==='up'?'↑':trend==='down'?'↓':'→';const tc=trend==='up'?'var(--green)':trend==='down'?'var(--red)':'var(--tx4)';
+    const cvLabel=cv===null?'—':(cv*100).toFixed(0)+'%';const cvCls=cv===null?'':cv<0.3?'cv-pill cv-low':cv<0.6?'cv-pill cv-mid':'cv-pill cv-hi';
+    const mc=getMatchCount(p.ign),tot=totalMatches();
+    html+=`<tr style="cursor:pointer" class="js-player-link" data-ign="${escH(p.ign)}"><td style="display:flex;align-items:center;gap:6px"><span style="font-size:10px;color:${CLS_COLOR[p.cls]||'#94a3b8'}">${CLS_ICON[p.cls]||''}</span><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px">${escH(p.ign)}</span><span style="font-family:var(--mono);font-size:9px;color:var(--tx4)">${mc}/${tot}</span></td>`;
+    mks.forEach(mk=>{const r=allMatchData[mk].find(x=>x.IGN===p.ign);if(!r){html+='<td class="hm-na">—</td>';return}if(stat==='rating'){const rt=computeRating({[mk]:allMatchData[mk]},p.ign);html+=`<td class="hm-${rt.tier.toLowerCase()}" title="${rt.score}">${rt.tier}</td>`}else{const val=r[stat]||0;const classVals=allMatchData[mk].filter(x=>x.Class===r.Class).map(x=>x[stat]||0).sort((a,b)=>a-b);const med=classVals.length?classVals[Math.floor(classVals.length/2)]:0;const pct=med>0?val/med:1;const cls=pct>=1.3?'hm-s':pct>=1.0?'hm-a':pct>=0.7?'hm-b':pct>=0.5?'hm-c':'hm-d';html+=`<td class="${cls}">${fmt(val)}</td>`}});
+    html+=`<td style="text-align:center;font-weight:700;color:${tc}">${ti}</td><td style="text-align:center"><span class="${cvCls}">${cvLabel}</span></td></tr>`;
+  });
+  html+='</tbody>';tbl.innerHTML=html;
+  if(statSel&&!statSel._h){statSel.onchange=renderHeatmap;statSel._h=true}
+}
+
+function renderCV(){
+  const el=sel('cvList');if(!el)return;
+  const list=getAllPlayers().map(ign=>{const cv=computeCV(allMatchData,ign);const cls=getPlayerClass(ign);return{ign,cls,cv}}).filter(p=>p.cv!==null).sort((a,b)=>a.cv-b.cv);
+  el.innerHTML=list.map((p,i)=>{const pct=(p.cv*100).toFixed(1);const bCls=p.cv<0.3?'cv-low':p.cv<0.6?'cv-mid':'cv-hi';const label=p.cv<0.3?'สม่ำเสมอ':p.cv<0.6?'ขึ้นๆ ลงๆ':'ผันผวน';const barW=Math.min(p.cv/1.2*100,100);const barCol=p.cv<0.3?'var(--green)':p.cv<0.6?'var(--gold)':'var(--red)';
+    return`<div class="js-player-link" data-ign="${escH(p.ign)}" style="display:flex;align-items:center;gap:8px;padding:5px 4px;border-bottom:1px solid var(--border);cursor:pointer"><span style="font-family:var(--mono);font-size:10px;color:var(--tx4);width:18px;text-align:right;flex-shrink:0">${i+1}</span><span style="color:${CLS_COLOR[p.cls]||'#94a3b8'};flex-shrink:0;font-size:11px">${CLS_ICON[p.cls]||''}</span><span style="font-size:11px;font-weight:500;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escH(p.ign)}</span><div style="width:60px;height:4px;background:var(--bg3);border-radius:2px;overflow:hidden;flex-shrink:0"><div style="height:100%;width:${barW}%;background:${barCol};border-radius:2px"></div></div><span class="cv-pill ${bCls}" style="width:66px;text-align:center">${label} ${pct}%</span></div>`;
+  }).join('');
+}
+
+function renderClutch(){
+  const el=sel('clutchList');if(!el)return;
+  const list=getAllPlayers().map(ign=>{const c=computeClutch(allMatchData,ign);const cls=getPlayerClass(ign);return{ign,cls,clutch:c}}).filter(p=>p.clutch!==null&&['Numina','Celestune','Nightwalker','Bloodstorm','Longyin'].includes(p.cls)).sort((a,b)=>b.clutch-a.clutch);
+  if(!list.length){el.innerHTML='<div style="padding:12px;text-align:center;color:var(--tx3);font-size:11px">No DPS data</div>';return}
+  el.innerHTML=list.map((p,i)=>{const pct=Math.round(p.clutch*100);const col=pct>=60?'var(--green)':pct>=40?'var(--gold)':'var(--red)';
+    return`<div class="js-player-link" data-ign="${escH(p.ign)}" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:3px 0"><span style="font-family:var(--mono);font-size:10px;color:var(--tx4);width:16px;text-align:right;flex-shrink:0">${i+1}</span><span style="color:${CLS_COLOR[p.cls]||'#94a3b8'};flex-shrink:0;font-size:11px">${CLS_ICON[p.cls]||''}</span><span style="font-size:11px;font-weight:500;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escH(p.ign)}</span><div style="width:70px;height:5px;background:var(--bg3);border-radius:3px;overflow:hidden;flex-shrink:0"><div style="height:100%;width:${pct}%;background:${col};border-radius:3px"></div></div><span style="font-family:var(--mono);font-size:11px;font-weight:700;color:${col};width:32px;text-align:right;flex-shrink:0">${pct}%</span></div>`;
+  }).join('');
+}
+
+function renderSuppEff(){
+  const el=sel('suppEffList');if(!el)return;
+  const mks=Object.keys(allMatchData).filter(k=>Array.isArray(allMatchData[k]));
+  if(!mks.length){el.innerHTML='<div style="padding:12px;text-align:center;color:var(--tx3);font-size:11px">No data</div>';return}
+  const sylphStats={};
+  mks.forEach(mk=>{const rows=allMatchData[mk];const td=rows.reduce((a,r)=>a+(r.DamageTaken||0),0);rows.filter(r=>r.Class==='Sylph').forEach(r=>{if(!sylphStats[r.IGN])sylphStats[r.IGN]=[];if(td>0)sylphStats[r.IGN].push((r.Heal||0)/td)})});
+  const list=Object.entries(sylphStats).map(([ign,vals])=>({ign,eff:vals.reduce((a,b)=>a+b,0)/vals.length})).sort((a,b)=>b.eff-a.eff);
+  if(!list.length){el.innerHTML='<div style="padding:12px;text-align:center;color:var(--tx3);font-size:11px">No Sylph data</div>';return}
+  el.innerHTML=list.map((p,i)=>{const pct=Math.round(p.eff*100);const col=pct>=50?'var(--green)':pct>=25?'var(--gold)':'var(--red)';
+    return`<div class="js-player-link" data-ign="${escH(p.ign)}" style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:3px 0"><span style="font-family:var(--mono);font-size:10px;color:var(--tx4);width:16px;text-align:right;flex-shrink:0">${i+1}</span><span style="font-size:11px;flex-shrink:0">🪭</span><span style="font-size:11px;font-weight:500;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escH(p.ign)}</span><div style="width:70px;height:5px;background:var(--bg3);border-radius:3px;overflow:hidden;flex-shrink:0"><div style="height:100%;width:${Math.min(pct,100)}%;background:${col};border-radius:3px"></div></div><span style="font-family:var(--mono);font-size:11px;font-weight:700;color:${col};width:36px;text-align:right;flex-shrink:0">${pct}%</span></div>`;
+  }).join('');
+}
+
+function renderMedianTable(){
+  const tbl=sel('medianTable');if(!tbl)return;
+  const sl=sel('medianMatchSel');
+  const mks=Object.keys(allMatchData).filter(k=>Array.isArray(allMatchData[k]));
+  if(sl&&!sl._m){sl.innerHTML=`<option value="">ทุกแมตช์ (เฉลี่ย)</option>`+mks.map(k=>`<option value="${escH(k)}">${k.length>16?k.slice(0,15)+'…':k}</option>`).join('');sl.onchange=renderMedianTable;sl._m=true}
+  const mk=sl?sl.value:'';
+  const rows=mk&&allMatchData[mk]?allMatchData[mk]:Object.values(allMatchData).filter(Array.isArray).flat();
+  const byClass={};rows.forEach(r=>{if(!byClass[r.Class])byClass[r.Class]=[];byClass[r.Class].push(r)});
+  const statKeys=['Kill','Assist','DmgPlayer','DmgTower','Heal','DamageTaken','Death'];
+  const medOf=(arr,k)=>{const v=arr.map(r=>r[k]||0).sort((a,b)=>a-b);const m=Math.floor(v.length/2);return v.length%2===0?(v[m-1]+v[m])/2:v[m]};
+  const allP=new Set();rows.forEach(r=>allP.add(r.IGN));
+  const shortLabel=k=>k==='DmgPlayer'?'DMG P':k==='DmgTower'?'DMG T':k==='DamageTaken'?'Taken':k;
+  let html='<thead><tr><th style="text-align:left;min-width:140px;position:sticky;left:0;z-index:4">Player</th><th>Class</th>'+statKeys.map(k=>'<th>'+shortLabel(k)+'</th>').join('')+'</tr></thead><tbody>';
+  const sorted=[...allP].sort((a,b)=>{const ca=rows.find(r=>r.IGN===a)?.Class||'';const cb=rows.find(r=>r.IGN===b)?.Class||'';return ca.localeCompare(cb)||a.localeCompare(b)});
+  let lastCls='';
+  sorted.forEach(ign=>{
+    const pRows=rows.filter(r=>r.IGN===ign);if(!pRows.length)return;
+    const cls=pRows[0].Class;
+    if(cls!==lastCls){const cm=byClass[cls]||[];html+='<tr style="background:var(--bg3)"><td style="position:sticky;left:0;background:var(--bg3);font-weight:700;color:'+(CLS_COLOR[cls]||'#94a3b8')+';font-size:10px;letter-spacing:.5px;text-transform:uppercase;display:flex;align-items:center;gap:5px;padding:6px 12px">'+(CLS_ICON[cls]||'')+' '+cls+' <span style="color:var(--tx3);font-weight:400">'+cm.length+'p</span></td><td style="color:var(--tx3);font-size:10px;text-align:center">Median</td>'+statKeys.map(k=>'<td style="color:var(--tx3);font-size:10px">'+fmt(medOf(cm,k))+'</td>').join('')+'</tr>';lastCls=cls}
+    const avgK=k=>{const v=pRows.map(r=>r[k]||0);return v.reduce((a,b)=>a+b,0)/v.length};
+    html+=`<tr style="cursor:pointer" class="js-player-link" data-ign="${escH(ign)}"><td style="position:sticky;left:0;background:var(--surface);display:flex;align-items:center;gap:5px;padding:5px 12px"><span style="font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px">${escH(ign)}</span></td><td></td>${statKeys.map(k=>{const med=medOf(byClass[cls]||[],k);const val=avgK(k);const ratio=med>0?val/med:1;const isLower=k==='Death';const good=isLower?ratio<=1:ratio>=1;const pctD=Math.round((ratio-1)*100);const bg=good?'var(--green-bg)':'var(--red-bg)';const col=good?'var(--green)':'var(--red)';return'<td style="background:'+bg+';color:'+col+'">'+fmt(val)+'<span style="font-size:9px;margin-left:2px">'+(pctD>=0?'+':'')+pctD+'%</span></td>';}).join('')}</tr>`;
+  });
+  html+='</tbody>';tbl.innerHTML=html;
+}
+
+function renderComparePanel(){
+  const selA=sel('cmpSelA'),selB=sel('cmpSelB'),matchSel=sel('cmpMatchSelPlayers');
+  if(!selA._p){const opts=`<option value="">— เลือกผู้เล่น —</option>`+getAllPlayers().map(p=>`<option value="${escH(p)}">${escH(p)}</option>`).join('');selA.innerHTML=opts;selB.innerHTML=opts;selA.onchange=selB.onchange=buildCmpRadar;selA._p=true}
+  if(matchSel&&!matchSel._p){matchSel.onchange=buildCmpRadar;matchSel._p=true}
+  if(matchSel){const mks=Object.keys(allMatchData).filter(k=>Array.isArray(allMatchData[k]));const curr=matchSel.value;matchSel.innerHTML=`<option value="">— ทุกแมตช์ (เฉลี่ย) —</option>`+mks.map(m=>`<option value="${escH(m)}">${escH(m.length>20?m.slice(0,19)+'…':m)}</option>`).join('');if(mks.includes(curr))matchSel.value=curr}
+}
+
+function buildCmpRadar(){
+  if(cmpRadarInst){cmpRadarInst.destroy();cmpRadarInst=null}
+  const ignA=sel('cmpSelA').value,ignB=sel('cmpSelB').value;
+  const matchFilter=sel('cmpMatchSelPlayers')?sel('cmpMatchSelPlayers').value:'';
+  sel('cmpStatCard').style.display=ignA&&ignB?'block':'none';
+  if(!ignA||!ignB)return;
+  const pfA=computePerf(allMatchData,ignA),pfB=computePerf(allMatchData,ignB);
+  const statKeys=['Kill','Assist','DmgPlayer','DmgTower','Heal','DamageTaken','Death','Revive'];
+  const labels=['Kill','Assist','DMG P','DMG T','Heal','Taken','Death','Revive'];
+  const getV=(pf,k)=>matchFilter?pf.latest(k,matchFilter):pf.avg(k);
+  const vA=statKeys.map(k=>getV(pfA,k));const vB=statKeys.map(k=>getV(pfB,k));
+  const mxAll=statKeys.map((_,i)=>Math.max(vA[i],vB[i],1));
+  const nA=vA.map((v,i)=>Math.round(v/mxAll[i]*100));const nB=vB.map((v,i)=>Math.round(v/mxAll[i]*100));
+  const clsA=getPlayerClass(ignA),clsB=getPlayerClass(ignB);
+  cmpRadarInst=new Chart(sel('cmpRadar'),{type:'radar',data:{labels,datasets:[{label:ignA,data:nA,borderColor:'#818cf8',backgroundColor:'#818cf818',borderWidth:2,pointRadius:4,pointBackgroundColor:'#818cf8'},{label:ignB,data:nB,borderColor:'#f87171',backgroundColor:'#f8717118',borderWidth:2,pointRadius:4,pointBackgroundColor:'#f87171'}]},options:{...CHART_OPTS,plugins:{legend:{labels:{color:'var(--tx3)',font:{size:11},usePointStyle:true,padding:12},position:'bottom'},tooltip:{...TT,displayColors:true}},scales:{r:{grid:{color:'var(--border)'},angleLines:{color:'var(--border)'},ticks:{display:false},pointLabels:{color:'var(--tx3)',font:{size:10}}}}}});
+  const mDataForRating=matchFilter?{[matchFilter]:allMatchData[matchFilter]}:allMatchData;
+  const rtA=computeRating(mDataForRating,ignA),rtB=computeRating(mDataForRating,ignB);
+  const allStatKeys=['Kill','Assist','DmgPlayer','DmgTower','Heal','DamageTaken','Death','Revive','Resource'];
+  const statLabels={Kill:'Kill',Assist:'Assist',DmgPlayer:'DMG Player',DmgTower:'DMG Tower',Heal:'Heal',DamageTaken:'DMG Taken',Death:'Death',Revive:'Revive',Resource:'Resource'};
+  sel('cmpStatTitle').textContent=`${ignA} vs ${ignB}${matchFilter?' — '+matchFilter:''}`;
+  let winA=0,winB=0;
+  sel('cmpStatRows').innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 14px;background:var(--bg3);border-radius:var(--r-sm);margin-bottom:8px"><div style="display:flex;align-items:center;gap:8px"><span class="avatar" style="width:32px;height:32px;font-size:16px;background:${CLS_COLOR[clsA]||'#6366f1'}22">${CLS_ICON[clsA]||'⚔️'}</span><div><div style="font-size:13px;font-weight:700">${escH(ignA)}</div><div style="font-size:10px;color:var(--tx3)">${clsA}</div></div><span class="tier ${tcls(rtA.tier)}" style="padding:3px 8px">${rtA.tier} ${rtA.score}</span></div><div style="font-size:12px;font-weight:700;color:var(--tx3)">VS</div><div style="display:flex;align-items:center;gap:8px;flex-direction:row-reverse"><span class="avatar" style="width:32px;height:32px;font-size:16px;background:${CLS_COLOR[clsB]||'#ef4444'}22">${CLS_ICON[clsB]||'⚔️'}</span><div style="text-align:right"><div style="font-size:13px;font-weight:700">${escH(ignB)}</div><div style="font-size:10px;color:var(--tx3)">${clsB}</div></div><span class="tier ${tcls(rtB.tier)}" style="padding:3px 8px">${rtB.tier} ${rtB.score}</span></div></div><div class="cmp-stat-grid">${allStatKeys.map(k=>{const va=getV(pfA,k),vb=getV(pfB,k);const isLower=k==='Death';const aWins=isLower?va<vb:va>vb;const bWins=isLower?vb<va:vb>va;if(aWins)winA++;else if(bWins)winB++;const isMega=['DmgPlayer','DmgTower','Heal','DamageTaken'].includes(k);const fa=isMega?fmt(va):Math.round(va);const fb=isMega?fmt(vb):Math.round(vb);const clsA2=aWins?'cmp-win':bWins?'cmp-lose':'cmp-tie';const clsB2=bWins?'cmp-win':aWins?'cmp-lose':'cmp-tie';return'<div class="cmp-stat-a '+clsA2+'">'+fa+'</div><div class="cmp-stat-k">'+statLabels[k]+'</div><div class="cmp-stat-b '+clsB2+'">'+fb+'</div>'}).join('')}</div><div style="display:flex;justify-content:space-between;padding:8px 14px;background:var(--bg3);border-radius:var(--r-sm);margin-top:8px;font-size:12px;font-weight:700"><span style="color:${winA>winB?'var(--green)':'var(--tx3)'}">${escH(ignA)}: ${winA} ชนะ</span><span style="color:var(--tx3)">จาก ${allStatKeys.length} stats</span><span style="color:${winB>winA?'var(--green)':'var(--tx3)'}">${escH(ignB)}: ${winB} ชนะ</span></div>`;
+}
+
+function renderOpponentPanel(){
+  if(!oppData.length&&!Object.keys(allOppMatchData).length){['oppCompCards','compStructure','threatList','h2hTable','oppRosterTable'].forEach(id=>{const e=sel(id);if(e)e.innerHTML='<div style="text-align:center;padding:24px;color:var(--tx3);font-size:12px">อัปโหลด CSV ฝ่ายตรงข้ามเพื่อดูการวิเคราะห์</div>'});return}
+  renderOppComposition();renderThreatList();renderH2H();renderOppBarChart();renderOppRoster();
+}
+
+function renderOppComposition(){
+  const el=sel('oppCompCards'),strEl=sel('compStructure');
+  const activeOppRows=oppData.length?oppData:Object.values(allOppMatchData).filter(Array.isArray).flat();
+  if(!activeOppRows.length||!el)return;
+  const oppByClass={};activeOppRows.forEach(r=>{if(!oppByClass[r.Class])oppByClass[r.Class]={count:0,kill:0,dmg:0};oppByClass[r.Class].count++;oppByClass[r.Class].kill+=r.Kill||0;oppByClass[r.Class].dmg+=r.DmgPlayer||0});
+  const totalOpp=activeOppRows.length;
+  el.innerHTML=Object.entries(oppByClass).sort((a,b)=>b[1].dmg-a[1].dmg).map(([cls,s])=>{const pct=Math.round(s.count/totalOpp*100);const threat=s.dmg/s.count>6e6?'🔴':s.dmg/s.count>3e6?'🟡':'🟢';return`<div class="comp-cls-row"><div style="display:flex;align-items:center;gap:6px;width:130px"><span style="font-size:13px">${CLS_ICON[cls]||'❓'}</span><span style="font-size:11px;font-weight:600;color:${CLS_COLOR[cls]||'var(--tx1)'}">${cls}</span><span style="font-size:9px;color:var(--tx3);font-family:var(--mono)">${s.count}p</span><span>${threat}</span></div><div class="comp-bar-wrap"><div class="comp-bar-our" style="width:${pct}%;background:${CLS_COLOR[cls]||'#94a3b8'}44;border:1px solid ${CLS_COLOR[cls]||'#94a3b8'}"></div></div><div style="text-align:right;font-family:var(--mono);font-size:10px;color:var(--tx3);width:60px">${pct}% · ${fmt(s.dmg/s.count)} avg</div></div>`}).join('');
+  if(!strEl)return;
+  const ourByClass={};Object.values(allMatchData).filter(Array.isArray).flat().forEach(r=>{if(!ourByClass[r.Class])ourByClass[r.Class]=0;ourByClass[r.Class]++});
+  const allCls=[...new Set([...Object.keys(ourByClass),...Object.keys(oppByClass)])];
+  const maxC=Math.max(...allCls.map(c=>Math.max(ourByClass[c]||0,oppByClass[c]?.count||0)),1);
+  strEl.innerHTML=allCls.map(cls=>{const ourC=ourByClass[cls]||0,oppC=oppByClass[cls]?.count||0;const ourW=Math.round(ourC/maxC*100),oppW=Math.round(oppC/maxC*100);return`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)"><span style="font-size:11px;width:26px;text-align:center">${CLS_ICON[cls]||'❓'}</span><span style="font-size:10px;color:${CLS_COLOR[cls]||'var(--tx3)'};width:80px">${cls}</span><div style="flex:1;display:flex;justify-content:flex-end"><div class="comp-bar-our" style="width:${ourW}%;background:#818cf8;min-width:${ourC?4:0}px"></div></div><div style="width:36px;text-align:center;font-family:var(--mono);font-size:10px;color:var(--tx3)">${ourC} vs ${oppC}</div><div style="flex:1"><div class="comp-bar-opp" style="width:${oppW}%;background:var(--opp);min-width:${oppC?4:0}px"></div></div></div>`}).join('')+`<div style="display:flex;gap:16px;padding:6px 0;font-size:10px;font-weight:700"><span style="color:#818cf8">■ ทีมเรา</span><span style="color:var(--opp)">■ ฝ่ายตรงข้าม</span></div>`;
+}
+
+function renderThreatList(){
+  const el=sel('threatList'),cntEl=sel('threatCnt');if(!el||!oppData.length)return;
+  const ourRows=Object.values(allMatchData).filter(Array.isArray).flat();
+  const getOurMedian=(cls,stat)=>{const v=ourRows.filter(r=>r.Class===cls).map(r=>r[stat]||0).sort((a,b)=>a-b);if(!v.length)return 0;const m=Math.floor(v.length/2);return v.length%2===0?(v[m-1]+v[m])/2:v[m]};
+  const threats=oppData.map(p=>{const cls=p.Class;const med_dmg=getOurMedian(cls,'DmgPlayer');const med_kill=getOurMedian(cls,'Kill');const dmgAbove=med_dmg>0&&(p.DmgPlayer||0)>med_dmg;const killAbove=med_kill>0&&(p.Kill||0)>med_kill;if(!dmgAbove&&!killAbove)return null;const dmgRatio=med_dmg>0?(p.DmgPlayer||0)/med_dmg:1;const killRatio=med_kill>0?(p.Kill||0)/med_kill:1;return{...p,dmgRatio,killRatio,isHigh:dmgRatio>1.5||killRatio>1.5}}).filter(Boolean).sort((a,b)=>b.dmgRatio-a.dmgRatio);
+  if(cntEl)cntEl.textContent=threats.length;
+  if(!threats.length){el.innerHTML='<div style="padding:16px;color:var(--green);font-size:12px;font-weight:600;grid-column:1/-1">✓ ไม่มีผู้เล่นศัตรูที่เกินค่า median ทีมเรา</div>';return}
+  el.innerHTML=threats.map(p=>`<div class="threat-card ${p.isHigh?'high':''}"><div class="threat-name">${p.isHigh?'⚠️ ':''}${escH(p.IGN)}</div><div class="threat-cls">${CLS_ICON[p.Class]||''} ${p.Class}</div><div class="threat-stats"><span class="threat-stat">DMG ${fmt(p.DmgPlayer||0)} (×${p.dmgRatio.toFixed(1)})</span><span class="threat-stat">Kill ${p.Kill||0} (×${p.killRatio.toFixed(1)})</span></div></div>`).join('');
+}
+
+function renderH2H(){
+  const tbl=sel('h2hTable');if(!tbl)return;
+  const statSel=sel('h2hStatSel'),stat=statSel?statSel.value:'DmgPlayer';
+  const ourRows=Object.values(allMatchData).filter(Array.isArray).flat();
+  if(!oppData.length||!ourRows.length){tbl.innerHTML='<tr><td style="padding:16px;color:var(--tx3);text-align:center">ต้องมีข้อมูลทั้งสองทีม</td></tr>';return}
+  const allCls=[...new Set([...ourRows.map(r=>r.Class),...oppData.map(r=>r.Class)])];
+  const avgCls=(rows,cls,k)=>{const v=rows.filter(r=>r.Class===cls).map(r=>r[k]||0);return v.length?v.reduce((a,b)=>a+b,0)/v.length:null};
+  const isMega=['DmgPlayer','DmgTower','Heal','DamageTaken'].includes(stat);
+  let html=`<thead><tr><th>Class</th><th style="color:#818cf8">ทีมเรา avg</th><th style="color:var(--opp)">ศัตรู avg</th><th>ผลต่าง</th><th>ข้อได้เปรียบ</th></tr></thead><tbody>`;
+  let ourTotal=0,oppTotal=0,clsCnt=0;
+  allCls.sort().forEach(cls=>{const ourA=avgCls(ourRows,cls,stat),oppA=avgCls(oppData,cls,stat);if(ourA===null&&oppA===null)return;const o=ourA||0,p=oppA||0;const diff=o-p;const adv=diff>0.05*Math.max(o,p)?'our':diff<-0.05*Math.max(o,p)?'opp':'tie';ourTotal+=o;oppTotal+=p;clsCnt++;html+=`<tr><td><span style="display:flex;align-items:center;gap:5px"><span style="font-size:12px">${CLS_ICON[cls]||'❓'}</span><span style="color:${CLS_COLOR[cls]||'var(--tx1)'};font-weight:600">${cls}</span></span></td><td style="font-family:var(--mono);font-size:12px;font-weight:600;color:#818cf8;text-align:center">${ourA!==null?isMega?fmt(o):Math.round(o):'—'}</td><td style="font-family:var(--mono);font-size:12px;font-weight:600;color:var(--opp);text-align:center">${oppA!==null?isMega?fmt(p):Math.round(p):'—'}</td><td style="font-family:var(--mono);font-size:11px;text-align:center;color:${diff>=0?'var(--green)':'var(--red)'}">${diff>=0?'+':''}${isMega?fmt(diff):Math.round(diff)}</td><td style="text-align:center"><span class="h2h-adv h2h-adv-${adv}">${adv==='our'?'ทีมเรา ✓':adv==='opp'?'ศัตรู ⚠️':'เสมอ'}</span></td></tr>`});
+  if(clsCnt>1){const totalDiff=ourTotal-oppTotal;const tCol=totalDiff>=0?'var(--green)':'var(--red)';const tAdv=totalDiff>0?'our':totalDiff<0?'opp':'tie';const tAdvLbl=totalDiff>0?'ทีมเรา ✓':totalDiff<0?'ศัตรู ⚠️':'เสมอ';html+='<tr style="background:var(--bg3);font-weight:700"><td>รวม</td><td style="font-family:var(--mono);color:#818cf8;text-align:center">'+(isMega?fmt(ourTotal):Math.round(ourTotal))+'</td><td style="font-family:var(--mono);color:var(--opp);text-align:center">'+(isMega?fmt(oppTotal):Math.round(oppTotal))+'</td><td style="font-family:var(--mono);text-align:center;color:'+tCol+'">'+(totalDiff>=0?'+':'')+(isMega?fmt(totalDiff):Math.round(totalDiff))+'</td><td style="text-align:center"><span class="h2h-adv h2h-adv-'+tAdv+'">'+tAdvLbl+'</span></td></tr>'}
+  html+='</tbody>';tbl.innerHTML=html;
+  if(statSel&&!statSel._h2h){statSel.onchange=renderH2H;statSel._h2h=true}
+}
+
+function renderOppBarChart(){
+  if(oppBarInst){oppBarInst.destroy();oppBarInst=null}
+  const cc=sel('oppBarChart');const summEl=sel('oppBarSummary');const matchSel=sel('barOppMatchSel');if(!cc)return;
+  const mns=Object.keys(allOppMatchData).filter(k=>Array.isArray(allOppMatchData[k]));const ourMns=Object.keys(allMatchData).filter(k=>Array.isArray(allMatchData[k]));
+  if(matchSel&&!matchSel._barBound){matchSel._barBound=true;matchSel.onchange=renderOppBarChart}
+  if(matchSel&&matchSel.options.length!==mns.length+1){matchSel.innerHTML='<option value="">— เฉลี่ยทุกแมตช์ —</option>'+mns.map(m=>'<option value="'+escH(m)+'">'+escH(m)+'</option>').join('');if(mns.length===1)matchSel.value=mns[0]}
+  const cls=oppTrendGroup==='team'?null:oppTrendGroup;const selMn=matchSel?matchSel.value:'';
+  const STATS=[{key:'Kill',label:'Kill',icon:'⚔️',higherBad:false},{key:'Assist',label:'Assist',icon:'🤝',higherBad:false},{key:'DmgPlayer',label:'DMG Player',icon:'💥',higherBad:false},{key:'DmgTower',label:'DMG Tower',icon:'🏰',higherBad:false},{key:'Heal',label:'Heal',icon:'💚',higherBad:false},{key:'DamageTaken',label:'DMG Taken',icon:'🛡️',higherBad:false},{key:'Death',label:'Death',icon:'💀',higherBad:true}];
+  const isMega=k=>['DmgPlayer','DmgTower','Heal','DamageTaken'].includes(k);
+  const getAvg=(data,stat)=>{const rows=data.filter(r=>!cls||r.Class===cls);return rows.length?rows.reduce((a,r)=>a+(r[stat]||0),0)/rows.length:0};
+  const oppRows=selMn?(allOppMatchData[selMn]||[]):mns.flatMap(m=>allOppMatchData[m]||[]);
+  const ourRows=selMn?(allMatchData[ourMns.find(m=>m===selMn)||ourMns[0]]||[]):Object.values(allMatchData).filter(Array.isArray).flat();
+  if(!oppRows.length&&!ourRows.length){if(summEl)summEl.innerHTML='';return}
+  const rawOpp=STATS.map(s=>getAvg(oppRows,s.key));const rawOur=STATS.map(s=>getAvg(ourRows,s.key));
+  const gaps=STATS.map((s,i)=>rawOur[i]===0?0:Math.round((rawOpp[i]-rawOur[i])/rawOur[i]*100));
+  const divergeGap=STATS.map((s,i)=>s.higherBad?-gaps[i]:gaps[i]);
+  const oppWins=i=>divergeGap[i]>5;const ourWins=i=>divergeGap[i]<-5;
+  const bgColor=i=>oppWins(i)?'rgba(239,68,68,0.88)':ourWins(i)?'rgba(34,197,94,0.85)':'rgba(148,163,184,0.45)';
+  const bdColor=i=>oppWins(i)?'#dc2626':ourWins(i)?'#16a34a':'#475569';
+  const maxAbs=Math.max(...divergeGap.map(Math.abs),15);const axMax=Math.ceil(maxAbs/10)*10+20;
+  const valueLabelPlugin={id:'barValueLabel',afterDatasetsDraw(chart){const{ctx,data,scales:{x}}=chart;ctx.save();data.datasets[0].data.forEach((val,i)=>{if(val===0)return;const meta=chart.getDatasetMeta(0);const bar=meta.data[i];const xPos=x.getPixelForValue(val);const isRight=val>0;const g=gaps[i];const label=(g>=0?'+':'')+g+'%';ctx.font='bold 11px DM Mono';ctx.fillStyle=oppWins(i)?'#fca5a5':ourWins(i)?'#86efac':'#94a3b8';ctx.textAlign=isRight?'left':'right';ctx.textBaseline='middle';ctx.fillText(label,xPos+(isRight?6:-6),bar.y)});ctx.restore()}};
+  oppBarInst=new Chart(cc,{type:'bar',plugins:[valueLabelPlugin],data:{labels:STATS.map(s=>s.icon+'  '+s.label),datasets:[{data:divergeGap,backgroundColor:STATS.map((_,i)=>bgColor(i)),borderColor:STATS.map((_,i)=>bdColor(i)),borderWidth:2,borderRadius:6,borderSkipped:false}]},options:{...CHART_OPTS,indexAxis:'y',interaction:{mode:'index',intersect:false},layout:{padding:{right:46,left:4,top:6,bottom:6}},plugins:{legend:{display:false},tooltip:{...TT,displayColors:false,callbacks:{title:ctx=>STATS[ctx[0].dataIndex].icon+'  '+STATS[ctx[0].dataIndex].label,label:ctx=>{const i=ctx.dataIndex;const s=STATS[i];const g=gaps[i];const fv=v=>isMega(s.key)?fmt(Math.round(v)):Math.round(v);const verdict=Math.abs(g)<=5?'≈ เสมอ':(s.higherBad?g<0:g>0)?'⚠️ ศัตรูได้เปรียบ':'✓ เราได้เปรียบ';return['  ศัตรู  '+fv(rawOpp[i]),'  เรา    '+fv(rawOur[i]),'  Gap   '+(g>=0?'+':'')+g+'%','  '+verdict]}}}},scales:{x:{min:-axMax,max:axMax,grid:{color:ctx=>ctx.tick.value===0?'rgba(255,255,255,0.45)':'rgba(255,255,255,0.07)',lineWidth:ctx=>ctx.tick.value===0?2:1},ticks:{color:'#94a3b8',font:{family:'DM Mono',size:11},callback:v=>(v>0?'+':'')+v+'%'},border:{display:false},title:{display:true,text:'← เราได้เปรียบ                    ศัตรูได้เปรียบ →',color:'#64748b',font:{size:11}}},y:{grid:{display:false},ticks:{color:'#f8fafc',font:{size:14,weight:'700'},padding:8},border:{display:false}}}}});
+  if(summEl){let nOur=0,nOpp=0,nTie=0;STATS.forEach((_,i)=>{if(oppWins(i))nOpp++;else if(ourWins(i))nOur++;else nTie++});const pills=STATS.map((s,i)=>{const g=gaps[i];const bg=oppWins(i)?'rgba(239,68,68,0.15)':ourWins(i)?'rgba(34,197,94,0.15)':'var(--bg3)';const bd=oppWins(i)?'#dc2626':ourWins(i)?'#16a34a':'var(--border)';const col=oppWins(i)?'#fca5a5':ourWins(i)?'#86efac':'#64748b';return'<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 11px;border-radius:20px;font-size:11px;font-weight:700;background:'+bg+';border:1px solid '+bd+';color:'+col+'">'+s.icon+' '+s.label+' <span style="font-family:var(--mono);font-size:10px">'+(g>=0?'+':'')+g+'%</span></span>'}).join('');summEl.innerHTML=pills+'<div style="width:100%;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);display:flex;gap:16px;font-size:12px;font-weight:700"><span style="color:#86efac">✓ ได้เปรียบ '+nOur+'</span><span style="color:#fca5a5">⚠️ เสียเปรียบ '+nOpp+'</span><span style="color:#64748b">≈ เสมอ '+nTie+'</span></div>'}
+  cc.onclick=evt=>{const pts=oppBarInst.getElementsAtEventForMode(evt,'nearest',{intersect:true},false);if(pts.length)openTrendDetail(STATS[pts[0].index],mns,cls)};
+}
+
+function openTrendDetail(s,mns,cls){
+  if(oppTrendDetailInst){oppTrendDetailInst.destroy();oppTrendDetailInst=null}
+  const detail=sel('oppTrendDetail'),title=sel('oppTrendDetailTitle'),cc=sel('oppTrendDetailChart');
+  if(!detail||!cc)return;
+  detail.style.display='block';
+  if(title)title.textContent=s.icon+' '+s.label+(cls?' — '+cls:' — ทีมรวม')+' (ศัตรู vs ทีมเรา)';
+  const oppVals=mns.map(mn=>{const rows=(allOppMatchData[mn]||[]).filter(r=>!cls||r.Class===cls);return rows.length?Math.round(rows.reduce((a,r)=>a+(r[s.key]||0),0)/rows.length):null});
+  const ourMns=Object.keys(allMatchData).filter(k=>Array.isArray(allMatchData[k]));
+  const ourRef=cls?(()=>{const v=Object.values(allMatchData).filter(Array.isArray).flat().filter(r=>r.Class===cls).map(r=>r[s.key]||0);return v.length?v.reduce((a,b)=>a+b,0)/v.length:null})():(()=>{const v=Object.values(allMatchData).filter(Array.isArray).flat().map(r=>r[s.key]||0);return v.length?v.reduce((a,b)=>a+b,0)/v.length:null})();
+  const ourVals=mns.map((_,i)=>{const mn=ourMns[i];if(mn&&allMatchData[mn]){const rows=allMatchData[mn].filter(r=>!cls||r.Class===cls);return rows.length?Math.round(rows.reduce((a,r)=>a+(r[s.key]||0),0)/rows.length):ourRef!==null?Math.round(ourRef):null}return ourRef!==null?Math.round(ourRef):null});
+  const labels=mns.map(m=>m.length>14?m.slice(0,13)+'…':m);const isMegaStat=['DmgPlayer','DmgTower','Heal','DamageTaken'].includes(s.key);
+  const datasets=[];
+  const minVals=mns.map(mn=>{const rows=(allOppMatchData[mn]||[]).filter(r=>!cls||r.Class===cls);return rows.length?Math.min(...rows.map(r=>r[s.key]||0)):null});
+  const maxVals=mns.map(mn=>{const rows=(allOppMatchData[mn]||[]).filter(r=>!cls||r.Class===cls);return rows.length?Math.max(...rows.map(r=>r[s.key]||0)):null});
+  datasets.push({label:'Max range',data:maxVals,borderColor:'transparent',backgroundColor:'#38bdf80a',borderWidth:0,pointRadius:0,tension:.35,fill:'+1',spanGaps:true});
+  datasets.push({label:'Min range',data:minVals,borderColor:'#38bdf830',backgroundColor:'transparent',borderWidth:1,borderDash:[3,3],pointRadius:0,tension:.35,fill:false,spanGaps:true});
+  datasets.push({label:'ศัตรู avg'+(cls?' ('+cls+')':''),data:oppVals,borderColor:HCOL[s.key]||'#38bdf8',backgroundColor:(HCOL[s.key]||'#38bdf8')+'18',borderWidth:2.5,pointBackgroundColor:HCOL[s.key]||'#38bdf8',pointBorderColor:'#0f172a',pointBorderWidth:2,pointRadius:5,tension:.35,fill:false,spanGaps:true});
+  if(ourVals.some(v=>v!==null))datasets.push({label:'ทีมเรา'+(cls?' ('+cls+')':''),data:ourVals,borderColor:'#818cf8',backgroundColor:'#818cf810',borderWidth:2,borderDash:[5,3],pointBackgroundColor:'#818cf8',pointBorderColor:'#0f172a',pointBorderWidth:1.5,pointRadius:4,tension:.35,fill:false,spanGaps:true});
+  oppTrendDetailInst=new Chart(cc,{type:'line',data:{labels,datasets},options:{...CHART_OPTS,interaction:{mode:'index',intersect:false},plugins:{legend:{display:true,labels:{color:'var(--tx3)',font:{size:10},usePointStyle:true,padding:12,filter:item=>item.text!=='Max range'&&item.text!=='Min range'}},tooltip:{...TT,displayColors:true,callbacks:{title:c=>mns[c[0].dataIndex]||c[0].label,label:c=>{if(c.raw===null)return null;if(c.dataset.label==='Max range'||c.dataset.label==='Min range')return null;return' '+c.dataset.label+': '+(isMegaStat?fmt(c.raw):c.raw)}}}},scales:{x:{grid:{color:'var(--border)'},ticks:{color:'var(--tx3)',font:{size:10},maxRotation:25},border:{display:false}},y:{grid:{color:'var(--border)'},ticks:{color:'var(--tx3)',font:{family:'DM Mono',size:10},callback:v=>fmt(v)},border:{display:false}}}}});
+  detail.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function renderOppRoster(){
+  const tbl=sel('oppRosterTable'),lbl=sel('oppRosterMatchLbl');const matchSel=sel('oppRosterMatchSel');
+  const mns=Object.keys(allOppMatchData).filter(k=>Array.isArray(allOppMatchData[k]));
+  if(matchSel&&!matchSel._or){matchSel.innerHTML=mns.map(m=>`<option value="${escH(m)}">${m.length>18?m.slice(0,17)+'…':m}</option>`).join('');if(selOppMatch&&mns.includes(selOppMatch))matchSel.value=selOppMatch;matchSel.onchange=e=>{selOppMatch=e.target.value;oppData=allOppMatchData[selOppMatch]||[];renderOpponentPanel();renderOppSidebar();renderAll()};matchSel._or=true}
+  const rows=oppData.length?oppData:(mns.length?allOppMatchData[mns[0]]:[]);
+  if(!rows.length||!tbl)return;
+  if(lbl)lbl.textContent=selOppMatch||'';
+  const sorted=[...rows].sort((a,b)=>(b.DmgPlayer||0)-(a.DmgPlayer||0));
+  let html='<thead><tr><th>#</th><th>Player</th><th>Class</th><th>Kill</th><th>Assist</th><th>DMG Player</th><th>DMG Tower</th><th>Heal</th><th>Death</th></tr></thead><tbody>';
+  const getOurMedianForOpp=(cls,stat)=>{const v=Object.values(allMatchData).filter(Array.isArray).flat().filter(r=>r.Class===cls).map(r=>r[stat]||0).sort((a,b)=>a-b);if(!v.length)return 0;const m=Math.floor(v.length/2);return v.length%2===0?(v[m-1]+v[m])/2:v[m]};
+  sorted.forEach((p,i)=>{const med_dmg=getOurMedianForOpp(p.Class,'DmgPlayer');const isThreat=med_dmg>0&&(p.DmgPlayer||0)>med_dmg;html+=`<tr style="${isThreat?'background:var(--red-bg)':i%2?'background:var(--bg3)':''}"><td style="font-family:var(--mono);font-size:10px;color:var(--tx4);text-align:center">${i+1}</td><td style="font-size:11px;font-weight:600;color:${isThreat?'var(--red)':'var(--opp)'};white-space:nowrap">${isThreat?'⚠️ ':''}${escH(p.IGN)}</td><td><span style="display:flex;align-items:center;gap:4px;font-size:10px;color:${CLS_COLOR[p.Class]||'var(--tx3)'}">${CLS_ICON[p.Class]||'❓'} ${p.Class}</span></td><td style="font-family:var(--mono);font-size:11px;text-align:center;color:#f87171">${p.Kill||0}</td><td style="font-family:var(--mono);font-size:11px;text-align:center;color:#a78bfa">${p.Assist||0}</td><td style="font-family:var(--mono);font-size:11px;text-align:center;color:#fbbf24;font-weight:${isThreat?'700':'400'}">${fmt(p.DmgPlayer||0)}</td><td style="font-family:var(--mono);font-size:11px;text-align:center;color:#38bdf8">${fmt(p.DmgTower||0)}</td><td style="font-family:var(--mono);font-size:11px;text-align:center;color:#34d399">${fmt(p.Heal||0)}</td><td style="font-family:var(--mono);font-size:11px;text-align:center;color:#94a3b8">${p.Death||0}</td></tr>`});
+  html+='</tbody>';tbl.innerHTML=html;
+}
+
+function renderOppSidebar(){
+  const sb=sel('oppSidebar'),list=sel('oppList'),cnt=sel('oppCnt');if(!sb||!list)return;
+  if(!oppData.length){sb.classList.remove('show');return}
+  sb.classList.add('show');
+  const cf=sel('classFilter').value;const filtered=cf==='ALL'?[...oppData]:oppData.filter(p=>p.Class===cf);const sorted=filtered.sort((a,b)=>(b.DmgPlayer||0)-(a.DmgPlayer||0));
+  if(cnt)cnt.textContent=sorted.length;sel('oppSbName').textContent=`${selOppMatch||'ฝ่ายตรงข้าม'} (${sorted.length})`;
+  list.innerHTML='';
+  sorted.forEach(p=>{const d=document.createElement('div');d.className=`player-row${selOppPlayer===p.IGN?' active':''}`;if(selOppPlayer===p.IGN)d.style.borderLeftColor='var(--opp)';d.innerHTML=`<div class="p-info"><div class="p-name-row"><span class="p-name-text" style="color:var(--opp)">${escH(p.IGN)}</span></div><div class="p-meta"><span class="p-cls-lbl">${CLS_ICON[p.Class]||''} ${p.Class||'—'}</span></div></div><span class="p-score" style="color:var(--opp)">${fmt(p.DmgPlayer||0)}</span>`;d.onclick=()=>{selOppPlayer=(selOppPlayer===p.IGN)?null:p.IGN;renderOppSidebar();renderOppPlayerHeader();renderCharts()};list.appendChild(d)});
+}
+
+function renderOppPlayerHeader(){
+  const c=sel('oppHdr');if(!c)return;
+  if(!selOppPlayer||!oppData.length){c.classList.remove('show');return}
+  c.classList.add('show');
+  const p=oppData.find(r=>r.IGN===selOppPlayer);if(!p)return;
+  sel('oppNameEl').textContent=p.IGN;sel('oppAvEl').textContent=CLS_ICON[p.Class]||'❓';sel('oppClsEl').textContent=p.Class||'—';
+  const sorted=[...oppData].sort((a,b)=>(b.DmgPlayer||0)-(a.DmgPlayer||0));const idx=sorted.findIndex(x=>x.IGN===p.IGN);
+  sel('oppRankEl').textContent=idx>=0?`Rank #${idx+1}`:'—';
+  const rt=computeRating({m:oppData},p.IGN);const re=sel('oppRatingEl');re.style.display='inline-block';re.textContent=`${rt.tier} ${rt.score}`;re.className=`badge ${tcls(rt.tier)}`;
+}
+
+function exportReport(){
+  if(!selPlayer&&!selMatch){toast('เลือกผู้เล่นหรือแมตช์ก่อน','red');return}
+  let r='GVG Analytics — รายงานแมตช์\n'+'═'.repeat(36)+'\n\n';
+  if(selMatch&&allMatchData[selMatch]){const rows=allMatchData[selMatch];const s=k=>rows.reduce((a,r)=>a+(r[k]||0),0);r+=`แมตช์: ${selMatch}\nPlayers: ${rows.length}\nKill: ${s('Kill')} · Assist: ${s('Assist')}\nDMG Player: ${fmt(s('DmgPlayer'))}\nDMG Tower: ${fmt(s('DmgTower'))}\nHeal: ${fmt(s('Heal'))}\n\nTop 10 DMG Player:\n`;[...rows].sort((a,b)=>(b.DmgPlayer||0)-(a.DmgPlayer||0)).slice(0,10).forEach((p,i)=>{r+=`  ${i+1}. ${p.IGN} — ${fmt(p.DmgPlayer)} (${p.Class})\n`})}
+  if(selPlayer){const rt=computeRating(allMatchData,selPlayer);const pf=computePerf(allMatchData,selPlayer);const kd=pf.avg('Death')>0?(pf.avg('Kill')/pf.avg('Death')).toFixed(2):'∞';r+=`\nPlayer: ${selPlayer}\nRating: ${rt.tier} (${rt.score}/100)\nK/D: ${kd}\nMatches: ${pf.count}\nAvg Kill: ${pf.avg('Kill')} · Best: ${pf.best('Kill')}\nAvg DMG: ${fmt(pf.avg('DmgPlayer'))}\n`}
+  const blob=new Blob([r],{type:'text/plain;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='GVG_'+(selMatch||'report').replace(/[^a-zA-Z0-9]/g,'_')+'.txt';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);toast('ดาวน์โหลดรายงานแล้ว','ok');
+}
+
+function switchMode(mode){
+  ['player','class','roster','compare','opponent'].forEach(m=>{sel(m+'Panel').style.display=m===mode?'flex':'none';const tabEl=sel('tab'+m.charAt(0).toUpperCase()+m.slice(1));if(tabEl)tabEl.classList.toggle('active',m===mode)});
+  if(mode==='class')renderClassAnalysis();if(mode==='roster')renderRosterOverview();if(mode==='compare')renderComparePanel();if(mode==='opponent')renderOpponentPanel();
+  if(mode==='player'){populateCmpMatchSel();renderCmpChart();renderOppSidebar();}else sel('oppSidebar').classList.remove('show');
+}
+
+const uploadModal=sel('uploadModal'),dropZone=sel('dropZone'),fileInputEl=sel('fileInput'),pendingListEl=sel('pendingList'),doImportBtn=sel('doImport');
+sel('btnUpload').onclick=()=>uploadModal.classList.add('open');
+sel('closeUpload').onclick=closeUploadModal;sel('cancelUpload').onclick=closeUploadModal;
+function closeUploadModal(){uploadModal.classList.remove('open');pendingFiles=[];pendingListEl.innerHTML='';doImportBtn.disabled=true;if(fileInputEl)fileInputEl.value=''}
+dropZone.onclick=e=>{if(e.target!==fileInputEl)fileInputEl.click()};fileInputEl.onchange=e=>addFiles(Array.from(e.target.files));
+dropZone.ondragover=e=>{e.preventDefault();dropZone.classList.add('over')};dropZone.ondragleave=()=>dropZone.classList.remove('over');
+dropZone.ondrop=e=>{e.preventDefault();dropZone.classList.remove('over');addFiles(Array.from(e.dataTransfer.files).filter(f=>f.name.toLowerCase().endsWith('.csv')))};
+function addFiles(files){files.filter(f=>!pendingFiles.find(x=>x.name===f.name)).forEach(f=>pendingFiles.push(f));renderPendingList()}
+doImportBtn.onclick=()=>{let processed=0;pendingFiles.forEach(f=>{Papa.parse(f,{header:true,skipEmptyLines:true,transformHeader:h=>h.trim().replace(/^\uFEFF/,'').replace(/^["']|["']$/g,''),complete:res=>{let baseMn=f.name.replace(/\.csv$/i,''),mn=baseMn,counter=1;const rows=res.data.map(parseRow).filter(r=>r.IGN);if(!rows.length)toast(`ไฟล์ ${f.name} ไม่มีข้อมูลผู้เล่น`,'red');else{while(allMatchData[mn]){mn=`${baseMn} (${counter++})`}allMatchData[mn]=rows;selMatch=mn}processed++;if(processed===pendingFiles.length){const sb=computeSidebar(allMatchData,'ALL');if(sb.length&&!selPlayer)selPlayer=sb[0].name;toast(`นำเข้าแล้ว ${processed} ไฟล์`,'ok');sel('matchBtnTxt').textContent=selMatch?(selMatch.length>16?selMatch.slice(0,15)+'…':selMatch):'เลือกแมตช์…';renderAll();setTimeout(closeUploadModal,600)}}})})};
+function renderPendingList(){pendingListEl.innerHTML='';pendingFiles.forEach((f,i)=>{const d=document.createElement('div');d.className='file-item';d.innerHTML=`<span class="fi-name">📄 ${escH(f.name)}</span><span class="fi-size">${fmtSz(f.size)}</span><button class="fi-del" data-i="${i}">&times;</button>`;pendingListEl.appendChild(d)});pendingListEl.querySelectorAll('.fi-del').forEach(btn=>btn.onclick=()=>{pendingFiles.splice(+btn.dataset.i,1);renderPendingList()});doImportBtn.disabled=!pendingFiles.length}
+
+const oppUploadModal=sel('oppUploadModal'),oppDropZone=sel('oppDropZone'),oppFileInputEl=sel('oppFileInput'),oppPendingListEl=sel('oppPendingList'),doOppImportBtn=sel('doOppImport');
+function openOppUpload(){oppUploadModal.classList.add('open')}
+sel('btnOppUpload').onclick=openOppUpload;sel('btnOppUpload2').onclick=openOppUpload;sel('closeOppUpload').onclick=closeOppUploadModal;sel('cancelOppUpload').onclick=closeOppUploadModal;
+function closeOppUploadModal(){oppUploadModal.classList.remove('open');oppPendingFiles=[];oppPendingListEl.innerHTML='';doOppImportBtn.disabled=true;if(oppFileInputEl)oppFileInputEl.value=''}
+oppDropZone.onclick=e=>{if(e.target!==oppFileInputEl)oppFileInputEl.click()};oppFileInputEl.onchange=e=>addOppFiles(Array.from(e.target.files));
+oppDropZone.ondragover=e=>{e.preventDefault();oppDropZone.classList.add('over')};oppDropZone.ondragleave=()=>oppDropZone.classList.remove('over');
+oppDropZone.ondrop=e=>{e.preventDefault();oppDropZone.classList.remove('over');addOppFiles(Array.from(e.dataTransfer.files).filter(f=>f.name.toLowerCase().endsWith('.csv')))};
+function addOppFiles(files){files.filter(f=>!oppPendingFiles.find(x=>x.name===f.name)).forEach(f=>oppPendingFiles.push(f));renderOppPendingList()}
+doOppImportBtn.onclick=()=>{let processed=0;oppPendingFiles.forEach(f=>{Papa.parse(f,{header:true,skipEmptyLines:true,transformHeader:h=>h.trim().replace(/^\uFEFF/,'').replace(/^["']|["']$/g,''),complete:res=>{let baseMn=f.name.replace(/\.csv$/i,''),mn=baseMn,counter=1;const rows=res.data.map(parseRow).filter(r=>r.IGN);if(!rows.length)toast(`ไฟล์ ${f.name} ไม่มีข้อมูลผู้เล่น`,'red');else{while(allOppMatchData[mn]){mn=`${baseMn} (${counter++})`}allOppMatchData[mn]=rows;selOppMatch=mn;oppData=rows}processed++;if(processed===oppPendingFiles.length){sel('oppMatchBtnTxt').textContent=selOppMatch?(selOppMatch.length>16?selOppMatch.slice(0,15)+'…':selOppMatch):'เลือกแมตช์…';toast(`ศัตรู: นำเข้าแล้ว ${processed} ไฟล์`,'info');renderAll();setTimeout(closeOppUploadModal,600)}}})})};
+function renderOppPendingList(){oppPendingListEl.innerHTML='';oppPendingFiles.forEach((f,i)=>{const d=document.createElement('div');d.className='file-item';d.innerHTML=`<span class="fi-name">📄 ${escH(f.name)}</span><span class="fi-size">${fmtSz(f.size)}</span><button class="fi-del" data-i="${i}">&times;</button>`;oppPendingListEl.appendChild(d)});oppPendingListEl.querySelectorAll('.fi-del').forEach(btn=>btn.onclick=()=>{oppPendingFiles.splice(+btn.dataset.i,1);renderOppPendingList()});doOppImportBtn.disabled=!oppPendingFiles.length}
+
+function renderOppMatchDropdown(){
+  const mfl=sel('oppMatchFileList'),hdr=sel('oppMatchDdHdr');const names=Object.keys(allOppMatchData);hdr.textContent=`${names.length} ไฟล์โหลดแล้ว`;mfl.innerHTML='';
+  if(!names.length){mfl.innerHTML='<div style="padding:14px;text-align:center;font-size:12px;color:var(--tx3)">ยังไม่มีไฟล์</div>';return}
+  names.forEach(name=>{const rows=allOppMatchData[name];const item=document.createElement('div');item.className=`match-fi${name===selOppMatch?' active':''}`;item.innerHTML=`<span style="font-size:14px">📄</span><div style="flex:1;min-width:0"><div class="match-fi-name">${escH(name)}</div><div class="match-fi-meta">${rows.length} ผู้เล่น</div></div>${name===selOppMatch?'<span class="match-fi-check">✓</span>':''}`;item.onclick=e=>{e.stopPropagation();selOppMatch=name;oppData=allOppMatchData[name];sel('oppMatchBtnTxt').textContent=name.length>16?name.slice(0,15)+'…':name;closeDropdown('opp');renderAll();toast(`ศัตรู: ${name}`,'info')};mfl.appendChild(item)});
+}
+
+sel('matchBtn').onclick=e=>{e.stopPropagation();renderMatchDropdown();const dd=sel('matchDropdown'),btn=sel('matchBtn'),arr=sel('matchArrow');const open=dd.classList.toggle('open');btn.classList.toggle('open',open);arr.classList.toggle('up',open);if(open){const r=btn.getBoundingClientRect();dd.style.top=(r.bottom+5)+'px';dd.style.left=Math.max(8,r.right-320)+'px'}};
+sel('oppMatchBtn').onclick=e=>{e.stopPropagation();renderOppMatchDropdown();const dd=sel('oppMatchDropdown'),btn=sel('oppMatchBtn'),arr=sel('oppMatchArrow');const open=dd.classList.toggle('open');btn.classList.toggle('open',open);arr.classList.toggle('up',open);if(open){const r=btn.getBoundingClientRect();dd.style.top=(r.bottom+5)+'px';dd.style.left=Math.max(8,r.right-320)+'px'}};
+document.addEventListener('click',e=>{if(!sel('matchDropdown').contains(e.target)&&!sel('matchBtn').contains(e.target))closeDropdown('match');if(!sel('oppMatchDropdown').contains(e.target)&&!sel('oppMatchBtn').contains(e.target))closeDropdown('opp')});
+sel('matchDropdown').onclick=e=>e.stopPropagation();sel('oppMatchDropdown').onclick=e=>e.stopPropagation();
+sel('matchAddBtn').onclick=()=>{closeDropdown('match');uploadModal.classList.add('open')};sel('oppMatchAddBtn').onclick=()=>{closeDropdown('opp');oppUploadModal.classList.add('open')};
+
+document.addEventListener('click',e=>{const pl=e.target.closest('.js-player-link');if(pl&&pl.dataset.ign){selPlayer=pl.dataset.ign;switchMode('player');renderAll()}});
+
+sel('cancelClear').onclick=()=>sel('confirmModal').classList.remove('open');
+sel('doClear').onclick=()=>{sel('confirmModal').classList.remove('open');allMatchData={};allOppMatchData={};selMatch=null;selPlayer=null;selOppPlayer=null;selOppMatch=null;oppData={};matchWL={};sel('matchBtnTxt').textContent='เลือกแมตช์…';sel('oppMatchBtnTxt').textContent='เลือกแมตช์…';renderAll();toast('ล้างข้อมูลทั้งหมดแล้ว')};
+sel('confirmModal').onclick=e=>{if(e.target===sel('confirmModal'))sel('confirmModal').classList.remove('open')};
+uploadModal.onclick=e=>{if(e.target===uploadModal)closeUploadModal()};oppUploadModal.onclick=e=>{if(e.target===oppUploadModal)closeOppUploadModal()};
+sel('classFilter').onchange=()=>{renderSidebar();renderOppSidebar()};
+sel('hamBtn').onclick=()=>{sel('sidebar').classList.toggle('open');sel('drawerBg').classList.toggle('show')};
+sel('drawerBg').onclick=()=>{sel('sidebar').classList.remove('open');sel('drawerBg').classList.remove('show')};
+
+// Trend group buttons
+document.getElementById('trendGroupBtns').addEventListener('click',e=>{const btn=e.target.closest('.tg-btn');if(!btn)return;oppTrendGroup=btn.dataset.group;document.querySelectorAll('.tg-btn').forEach(b=>{b.style.background=b===btn?'var(--accent-ll)':'none';b.style.color=b===btn?'var(--accent-text)':'var(--tx3)'});renderOppBarChart()});
+
+function switchHelpTab(tab){document.querySelectorAll('.help-tab').forEach(b=>b.classList.toggle('active',b.dataset.htab===tab));document.querySelectorAll('.help-pane').forEach(p=>p.classList.toggle('active',p.id==='hpane-'+tab))}
+
+function renderAll(){renderSidebar();renderPlayerHeader();renderPerfTable();renderCharts();renderMatchAnalytics();renderMatchDropdown();populateCmpMatchSel();renderOppSidebar();renderOppPlayerHeader();const rp=sel('rosterPanel');if(rp&&rp.style.display!=='none')renderRosterOverview();const cp=sel('comparePanel');if(cp&&cp.style.display!=='none')renderComparePanel();const op=sel('opponentPanel');if(op&&op.style.display!=='none')renderOpponentPanel()}
+
+(function init(){renderAll()})();
+</script>
+</body>
+</html>
